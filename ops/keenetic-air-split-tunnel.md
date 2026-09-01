@@ -28,3 +28,12 @@ Router sat at **~100% CPU**. Load is AmneziaWG ASC crypto on traffic steered int
 
 ## Expectation
 CPU may stay high while YouTube/Google ranges are still large (needed for YT). Relief comes from no longer encrypting Apple/GCP bulk. If still pegged, next step is further Google narrowing or a stronger router.
+
+## Follow-up 2026-09-01 — Wi‑Fi (Vostryakovsky)
+A/B: `Wireguard1` down did **not** drop CPU (still ~100%). Process **`ndm` ~84–98%**.
+
+Wi‑Fi change applied and saved:
+- was: channel **12**, width **40-below**, bitrate 300 Mbit, busy 6–13
+- now: channel **1**, width **20**, bitrate 144 Mbit, busy 1–3
+
+Overall `cpuload` still ~100% after change; `ndm` cur fluctuates lower at times. Next candidate: Keenetic Cloud / netcraze agent.
