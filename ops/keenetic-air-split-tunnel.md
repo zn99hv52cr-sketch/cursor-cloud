@@ -37,3 +37,13 @@ Wi‑Fi change applied and saved:
 - now: channel **1**, width **20**, bitrate 144 Mbit, busy 1–3
 
 Overall `cpuload` still ~100% after change; `ndm` cur fluctuates lower at times. Next candidate: Keenetic Cloud / netcraze agent.
+
+## Follow-up 2026-09-02 — draft firmware update
+Checked AWG survival on draft catalog first: `wireguard` component present and queued for **5.2 Alpha 7** (`5.02.A.7.0-0`). ASC is part of Keenetic WireGuard since 4.2+.
+
+Updated Air draft **5.1.1 → 5.2 Alpha 7**. After reboot:
+- `Wireguard1` / AWG-FI **up**, peer online, ASC line unchanged
+- VPS handshake OK
+- CPU samples dropped off the permanent 100% peg (seen ~6–52% while settling)
+
+Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
