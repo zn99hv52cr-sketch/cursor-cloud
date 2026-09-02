@@ -47,3 +47,8 @@ Updated Air draft **5.1.1 → 5.2 Alpha 7**. After reboot:
 - CPU samples dropped off the permanent 100% peg (seen ~6–52% while settling)
 
 Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
+
+## Follow-up 2026-09-02 — other routers
+- **Viva / Вилиса Лациса** (`sharpmaind.netcraze.pro`, KN-1910): draft **5.1.1 → 5.2 Alpha 7**. FI-AWG (`10.8.1.4`) up, ASC preserved, VPS handshake OK.
+- **Skipper / дача** (`sharpmind.netcraze.pro`, KN-2910): was stable 5.1.1; switched to draft and `components commit` to 5.2 Alpha 7 started (`update task started`, wireguard queued). Cloud stayed **503** afterward; polling stopped per request. Confirm locally later when cloud/admin is back.
+- Config backups: `/root/rc-vilisa-viva.txt`, `/root/rc-dacha-skipper.txt` on FI VPS.
