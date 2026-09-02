@@ -43,3 +43,15 @@ No secrets in this note.
 If it still dies: join the Windows PC to **iTruba personal hotspot**, USB still plugged — known workaround when GSA is still weird on the LAN.
 
 Windows AltServer also has a separate 2026 bug (`-22410` / `1100`); hotspot+USB is the practical bypass for that too.
+
+## Follow-up — HDrezka `NSCocoaErrorDomain 3840`
+
+AltStore itself installed. Installing **HDrezka** from AltStore on the phone then failed:
+
+`Install HDrezka Failed` — `NSCocoaErrorDomain 3840` — «The data couldn’t be read because it isn’t in the correct format.»
+
+Same class of bug: AltStore/AltServer got **HTML** (block page / GSA 401 page) instead of Apple plist/JSON while **signing a new app**. Cable does not skip Apple. Source JSON already loaded (the app is listed), so this is sign/IPA fetch, not “source missing”.
+
+Extra live change on **Air**: GitHub prefixes via `Wireguard1` (`140.82.112.0/20`, `192.30.252.0/22`, `185.199.108.0/22`, `143.55.64.0/20`). `github.com` was already in `awg-fi`.
+
+Retry: Happ **off**, **cellular off** (Wi‑Fi Assist), AltServer + iTunes/iCloud running, USB in. If 3840 stays: PC on iTruba hotspot + USB again.
