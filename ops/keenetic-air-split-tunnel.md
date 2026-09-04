@@ -75,4 +75,6 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 
 **Likely:** `ndm` spin (Keenetic Cloud agent / dns-proxy+FQDN churn / Wi‑Fi stack), regression or load that returns after hours on this build — **not** sudden VPN traffic.
 
+**Recheck 08:15Z:** cpuload 100/97/100; `ndm` cur 73–98 avg ~95; WG delta ~1 KB over ~2 min; cloud agent ACTIVE (serial ~1170+). Confirm YT statics innocent.
+
 **Next experiments (when approved):** brief cloud disable A/B; trim `awg-fi` FQDN list; reboot once to see if 5.2 “fresh” relief returns.
