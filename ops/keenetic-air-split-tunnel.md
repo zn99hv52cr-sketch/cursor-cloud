@@ -59,6 +59,6 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 
 **Root cause:** Air already had FQDN group `awg-fi` + `dns-proxy route object-group awg-fi Wireguard1` (youtube/googlevideo/rutor/…). iOS uses router DNS → FQDN policy works. Many TVs use their own DNS/DoH → FQDN never sees queries, so traffic needs **IP statics**. Gaps vs Viva (Лацис) YouTube/rutor coverage: `142.251/16`, `108.177/17`, `172.253/16`, `192.178/16`, `216.239.32/19`, `66.102/20`, `130.211/16`, and rutor `193.46.255.0/24` (`rutor.is` → `193.46.255.26`).
 
-**Applied on Air (saved):** those eight prefixes via `Wireguard1` (WG1 statics ~40 → ~44). Did **not** copy Viva’s ~1000-prefix dump (CPU risk on KN-1613). FQDN `awg-fi` already matches Viva `vpn-sites` for youtube/rutor; optional aliases `youtu.be` / `youtube-nocookie.com` pending re-auth after http lockout.
+**Applied on Air (saved):** those eight prefixes via `Wireguard1` (WG1 statics ~40 → ~44). Did **not** copy Viva’s ~1000-prefix dump (CPU risk on KN-1613). FQDN `awg-fi` already matches Viva `vpn-sites` for youtube/rutor; aliases `youtu.be` / `youtube-nocookie.com` present (121 includes). Spot-check 2026-09-04 ~06:53Z: routes persisted after save; WG1 up/online; **cpuload 100%** (full process sample deferred to later timer).
 
 **Note:** Viva keeps a huge IP list + `vpn-sites` FQDN; Air stays curated IP + rich FQDN. For TV apps, IP statics matter more than FQDN.
