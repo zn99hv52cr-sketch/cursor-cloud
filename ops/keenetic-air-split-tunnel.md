@@ -62,3 +62,17 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 **Applied on Air (saved):** those eight prefixes via `Wireguard1` (WG1 statics ~40 → ~44). Did **not** copy Viva’s ~1000-prefix dump (CPU risk on KN-1613). FQDN `awg-fi` already matches Viva `vpn-sites` for youtube/rutor; aliases `youtu.be` / `youtube-nocookie.com` present (121 includes). Spot-check 2026-09-04 ~06:53Z: routes persisted after save; WG1 up/online; **cpuload 100%** (full process sample deferred to later timer).
 
 **Note:** Viva keeps a huge IP list + `vpn-sites` FQDN; Air stays curated IP + rich FQDN. For TV apps, IP statics matter more than FQDN.
+
+## Follow-up 2026-09-04 — CPU back to 100% after 5.2 relief
+
+**Observation:** After draft **5.2 Alpha 7**, cpuload settled ~6–52%. ~50h uptime later (no reboot) spot-checks again show **cpuload 100%**.
+
+**Who:** process **`ndm`** ~79–90% cur/avg (max ~98%). `nginx` ~18%. Not a `wireguard` process.
+
+**Not the cause:** new YouTube/rutor statics / AWG bulk. Concurrent VPS peer sampling showed **~0 B/s** on Air (`10.8.1.7`) while router CPU was pegged. Same pattern as pre-5.2 A/B: WG down did not free CPU.
+
+**Still in config:** broad Apple/GCP prefixes (`17/8`, `34.64/10`, …), `awg-fi` ~120 FQDNs + dns-proxy policy, `cloud control2`, Wi‑Fi 2.4 still **ch1 / 20 MHz**.
+
+**Likely:** `ndm` spin (Keenetic Cloud agent / dns-proxy+FQDN churn / Wi‑Fi stack), regression or load that returns after hours on this build — **not** sudden VPN traffic.
+
+**Next experiments (when approved):** brief cloud disable A/B; trim `awg-fi` FQDN list; reboot once to see if 5.2 “fresh” relief returns.
