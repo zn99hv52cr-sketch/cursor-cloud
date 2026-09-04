@@ -17,7 +17,7 @@ Router sat at **~100% CPU**. Load is AmneziaWG ASC crypto on traffic steered int
 ## Kept / added
 **Telegram:** `91.108.4.0/22`, `91.108.8.0/22`, `91.108.12.0/22`, `91.108.16.0/22`, `91.108.20.0/22`, `91.108.56.0/22`, `91.105.192.0/23`, `95.161.64.0/20`, `149.154.160.0/20`, `185.76.151.0/24`
 
-**YouTube / Google:** `64.233.160.0/19`, `74.125.0.0/16`, `142.250.0.0/16`, `172.217.0.0/16`, `173.194.0.0/16`, `209.85.128.0/17`, `216.58.0.0/16`
+**YouTube / Google:** `64.233.160.0/19`, `74.125.0.0/16`, `142.250.0.0/16`, `142.251.0.0/16`, `172.217.0.0/16`, `172.253.0.0/16`, `173.194.0.0/16`, `108.177.0.0/17`, `192.178.0.0/16`, `209.85.128.0/17`, `216.58.0.0/16`, `216.239.32.0/19`, `66.102.0.0/20`, `130.211.0.0/16`
 
 **Instagram / WhatsApp (Meta):** `31.13.0.0/16`, `157.240.0.0/16`, `69.171.224.0/19`, `129.134.0.0/16`, `173.252.64.0/18`, `66.220.144.0/20` (tightened), plus `185.60.216.0/22`, `179.60.192.0/22`
 
@@ -52,3 +52,13 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 - **Viva / Вилиса Лациса** (`sharpmaind.netcraze.pro`, KN-1910): draft **5.1.1 → 5.2 Alpha 7**. FI-AWG (`10.8.1.4`) up, ASC preserved, VPS handshake OK.
 - **Skipper / дача** (`sharpmind.netcraze.pro`, KN-2910): was stable 5.1.1; switched to draft and `components commit` to 5.2 Alpha 7 started (`update task started`, wireguard queued). Cloud stayed **503** afterward; polling stopped per request. Confirm locally later when cloud/admin is back.
 - Config backups: `/root/rc-vilisa-viva.txt`, `/root/rc-dacha-skipper.txt` on FI VPS.
+
+## Follow-up 2026-09-04 — TV YouTube / rutor.is (Востряковский Air vs Лацис Viva)
+
+**Symptom:** on Air Wi‑Fi, Smart TV YouTube failed while iOS worked; `rutor.is` also failed.
+
+**Root cause:** Air already had FQDN group `awg-fi` + `dns-proxy route object-group awg-fi Wireguard1` (youtube/googlevideo/rutor/…). iOS uses router DNS → FQDN policy works. Many TVs use their own DNS/DoH → FQDN never sees queries, so traffic needs **IP statics**. Gaps vs Viva (Лацис) YouTube/rutor coverage: `142.251/16`, `108.177/17`, `172.253/16`, `192.178/16`, `216.239.32/19`, `66.102/20`, `130.211/16`, and rutor `193.46.255.0/24` (`rutor.is` → `193.46.255.26`).
+
+**Applied on Air (saved):** those eight prefixes via `Wireguard1` (WG1 statics ~40 → ~44). Did **not** copy Viva’s ~1000-prefix dump (CPU risk on KN-1613). FQDN `awg-fi` already matches Viva `vpn-sites` for youtube/rutor; optional aliases `youtu.be` / `youtube-nocookie.com` pending re-auth after http lockout.
+
+**Note:** Viva keeps a huge IP list + `vpn-sites` FQDN; Air stays curated IP + rich FQDN. For TV apps, IP statics matter more than FQDN.
