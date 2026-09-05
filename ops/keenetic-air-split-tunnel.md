@@ -78,3 +78,13 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 **Recheck 08:15Z:** cpuload 100/97/100; `ndm` cur 73–98 avg ~95; WG delta ~1 KB over ~2 min; cloud agent ACTIVE (serial ~1170+). Confirm YT statics innocent.
 
 **Next experiments (when approved):** brief cloud disable A/B; trim `awg-fi` FQDN list; reboot once to see if 5.2 “fresh” relief returns.
+
+## Follow-up 2026-09-05 — CPU dropped after Yandex Station restricted
+
+**Now:** cpuload samples **3 / 35 / 39 / 17** (ndm calm ~2–7% avg). Contrast: previous day pegged **100%** on `ndm`.
+
+**Also:** router **uptime ~4 min** at first sample → a **reboot** happened around the same time as the Station change. Relief may be from Station internet cut **and/or** reboot clearing `ndm` spin; both align with the observation.
+
+**Device:** `known host "yandex-station-lite …" b8:87:6e:e5:3b:46`. As of 2026-09-04 RC it was still `ip hotspot host b8:87:6e:e5:3b:46 permit` + `conform` (internet allowed). User later disabled/limited internet for it.
+
+**Prior destinations:** Keenetic Air has **no retained per-host destination/flow log** (no DPI capture kept). Cannot reconstruct where the Station sent packets earlier—only MAC identity + that it was permitted. Typical Station traffic (not observed here) is Yandex cloud/Alice/Quasar/music CDNs over HTTPS.
