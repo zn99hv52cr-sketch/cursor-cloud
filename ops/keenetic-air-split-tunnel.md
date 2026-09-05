@@ -93,17 +93,18 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 
 Station **`yandex-station-lite`** `b8:87:6e:e5:3b:46` = **`192.168.2.103`**, `access=permit`, Wi‑Fi Home, traffic growing.
 
-Live `show ip conntrack` (filtered `src=192.168.2.103`):
+Live `show ip conntrack` (filtered `src=192.168.2.103`), ~11 min / 20 samples via VPS (`/tmp/air_station_fresh.py`):
 
 | Dest | rDNS | Proto/port | Notes |
 |------|------|------------|-------|
-| 213.180.193.76 | `uniproxy.alice.yandex.net` | TCP/443 | **Main volume** (~90KB↑ / ~180KB↓) — Alice voice/proxy |
-| 213.180.193.230 | `quasar.yandex.net` | ICMP echo + TCP/443 | Quasar cloud; **continuous ping** |
+| 213.180.193.76 | `uniproxy.alice.yandex.net` | TCP/443 | **Main volume** (~138KB↑ / ~208KB↓ conntrack max) — Alice voice/proxy |
 | 213.180.204.179 | `xiva-daria.stable.qloud-b.yandex.net` | TCP/443 | Yandex XIVA push |
+| 213.180.193.230 | `quasar.yandex.net` | ICMP echo (+ TCP/443 in earlier sample) | Quasar keepalive ping every sample |
+| 213.180.193.226 | `report.appmetrica.yandex.net` | TCP/443 | AppMetrica |
 | 93.158.134.32 | `clck.yandex.net` | TCP/443 | Yandex click/metrics |
 | 213.180.193.9 | `scbh.yandex.net` | TCP/80 | Yandex HTTP |
 | 192.168.2.1 | router | UDP/53 | DNS via Keenetic |
 | 224.0.0.251 | mDNS | IGMP | LAN discovery |
 | 92.255.126.143 | (none) | UDP/123 | NTP |
 
-CPU while online sampled earlier ~2–49% (not pegged 100%). All internet destinations above are **Yandex AS / Quasar-Alice stack**, not WG/YouTube.
+Hotspot host counters during window: rx **491183→549229**, tx **311581→366870**. CPU samples **2–57%** (often ~3–7%, spikes to 29–57%; **not** pegged 100%). All internet destinations are **Yandex Alice/Quasar/XIVA/AppMetrica**, not WG/YouTube. No config changes.
