@@ -1,0 +1,136 @@
+# Keenetic Air (`sharpmaind2412`) — split-tunnel trim
+
+Date: 2026-09-01
+
+## Goal
+Unload CPU on Keenetic Air KN-1613 while keeping **YouTube, Telegram, Instagram, WhatsApp** via AmneziaWG (`Wireguard1` / AWG-FI → `10.8.1.7`).
+
+## Cause
+Router sat at **~100% CPU**. Load is AmneziaWG ASC crypto on traffic steered into the tunnel, not the route table itself. Oversized prefixes (Apple `17.0.0.0/8`, GCP `34.64.0.0/10`, `35.184.0.0/13`) pulled a lot of unrelated traffic into encryption.
+
+## Removed from `Wireguard1`
+- `17.0.0.0/8` (Apple)
+- `34.64.0.0/10` (GCP)
+- `35.184.0.0/13` (GCP)
+- `66.220.0.0/16` (too broad Meta)
+
+## Kept / added
+**Telegram:** `91.108.4.0/22`, `91.108.8.0/22`, `91.108.12.0/22`, `91.108.16.0/22`, `91.108.20.0/22`, `91.108.56.0/22`, `91.105.192.0/23`, `95.161.64.0/20`, `149.154.160.0/20`, `185.76.151.0/24`
+
+**YouTube / Google:** `64.233.160.0/19`, `74.125.0.0/16`, `142.250.0.0/16`, `142.251.0.0/16`, `172.217.0.0/16`, `172.253.0.0/16`, `173.194.0.0/16`, `108.177.0.0/17`, `192.178.0.0/16`, `209.85.128.0/17`, `216.58.0.0/16`, `216.239.32.0/19`, `66.102.0.0/20`, `130.211.0.0/16`
+
+**Instagram / WhatsApp (Meta):** `31.13.0.0/16`, `157.240.0.0/16`, `69.171.224.0/19`, `129.134.0.0/16`, `173.252.64.0/18`, `66.220.144.0/20` (tightened), plus `185.60.216.0/22`, `179.60.192.0/22`
+
+## Also on this pass
+- `Wireguard0` left **down** (dead old endpoint)
+- AWG peer keepalive set to **15s**
+- VPS Kuma monitor retargeted to Air peer `10.8.1.7` (was wrongly watching `10.8.1.8`)
+
+## Expectation
+CPU may stay high while YouTube/Google ranges are still large (needed for YT). Relief comes from no longer encrypting Apple/GCP bulk. If still pegged, next step is further Google narrowing or a stronger router.
+
+## Follow-up 2026-09-01 — Wi‑Fi (Vostryakovsky)
+A/B: `Wireguard1` down did **not** drop CPU (still ~100%). Process **`ndm` ~84–98%**.
+
+Wi‑Fi change applied and saved:
+- was: channel **12**, width **40-below**, bitrate 300 Mbit, busy 6–13
+- now: channel **1**, width **20**, bitrate 144 Mbit, busy 1–3
+
+Overall `cpuload` still ~100% after change; `ndm` cur fluctuates lower at times. Next candidate: Keenetic Cloud / netcraze agent.
+
+## Follow-up 2026-09-02 — draft firmware update
+Checked AWG survival on draft catalog first: `wireguard` component present and queued for **5.2 Alpha 7** (`5.02.A.7.0-0`). ASC is part of Keenetic WireGuard since 4.2+.
+
+Updated Air draft **5.1.1 → 5.2 Alpha 7**. After reboot:
+- `Wireguard1` / AWG-FI **up**, peer online, ASC line unchanged
+- VPS handshake OK
+- CPU samples dropped off the permanent 100% peg (seen ~6–52% while settling)
+
+Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
+
+## Follow-up 2026-09-02 — other routers
+- **Viva / Вилиса Лациса** (`sharpmaind.netcraze.pro`, KN-1910): draft **5.1.1 → 5.2 Alpha 7**. FI-AWG (`10.8.1.4`) up, ASC preserved, VPS handshake OK.
+- **Skipper / дача** (`sharpmind.netcraze.pro`, KN-2910): was stable 5.1.1; switched to draft and `components commit` to 5.2 Alpha 7 started (`update task started`, wireguard queued). Cloud stayed **503** afterward; polling stopped per request. Confirm locally later when cloud/admin is back.
+- Config backups: `/root/rc-vilisa-viva.txt`, `/root/rc-dacha-skipper.txt` on FI VPS.
+
+## Follow-up 2026-09-04 — TV YouTube / rutor.is (Востряковский Air vs Лацис Viva)
+
+**Symptom:** on Air Wi‑Fi, Smart TV YouTube failed while iOS worked; `rutor.is` also failed.
+
+**Root cause:** Air already had FQDN group `awg-fi` + `dns-proxy route object-group awg-fi Wireguard1` (youtube/googlevideo/rutor/…). iOS uses router DNS → FQDN policy works. Many TVs use their own DNS/DoH → FQDN never sees queries, so traffic needs **IP statics**. Gaps vs Viva (Лацис) YouTube/rutor coverage: `142.251/16`, `108.177/17`, `172.253/16`, `192.178/16`, `216.239.32/19`, `66.102/20`, `130.211/16`, and rutor `193.46.255.0/24` (`rutor.is` → `193.46.255.26`).
+
+**Applied on Air (saved):** those eight prefixes via `Wireguard1` (WG1 statics ~40 → ~44). Did **not** copy Viva’s ~1000-prefix dump (CPU risk on KN-1613). FQDN `awg-fi` already matches Viva `vpn-sites` for youtube/rutor; aliases `youtu.be` / `youtube-nocookie.com` present (121 includes). Spot-check 2026-09-04 ~06:53Z: routes persisted after save; WG1 up/online; **cpuload 100%** (full process sample deferred to later timer).
+
+**Note:** Viva keeps a huge IP list + `vpn-sites` FQDN; Air stays curated IP + rich FQDN. For TV apps, IP statics matter more than FQDN.
+
+## Follow-up 2026-09-04 — CPU back to 100% after 5.2 relief
+
+**Observation:** After draft **5.2 Alpha 7**, cpuload settled ~6–52%. ~50h uptime later (no reboot) spot-checks again show **cpuload 100%**.
+
+**Who:** process **`ndm`** ~79–90% cur/avg (max ~98%). `nginx` ~18%. Not a `wireguard` process.
+
+**Not the cause:** new YouTube/rutor statics / AWG bulk. Concurrent VPS peer sampling showed **~0 B/s** on Air (`10.8.1.7`) while router CPU was pegged. Same pattern as pre-5.2 A/B: WG down did not free CPU.
+
+**Still in config:** broad Apple/GCP prefixes (`17/8`, `34.64/10`, …), `awg-fi` ~120 FQDNs + dns-proxy policy, `cloud control2`, Wi‑Fi 2.4 still **ch1 / 20 MHz**.
+
+**Likely:** `ndm` spin (Keenetic Cloud agent / dns-proxy+FQDN churn / Wi‑Fi stack), regression or load that returns after hours on this build — **not** sudden VPN traffic.
+
+**Recheck 08:15Z:** cpuload 100/97/100; `ndm` cur 73–98 avg ~95; WG delta ~1 KB over ~2 min; cloud agent ACTIVE (serial ~1170+). Confirm YT statics innocent.
+
+**Next experiments (when approved):** brief cloud disable A/B; trim `awg-fi` FQDN list; reboot once to see if 5.2 “fresh” relief returns.
+
+## Follow-up 2026-09-05 — CPU dropped after Yandex Station restricted
+
+**Now:** cpuload samples **3 / 35 / 39 / 17** (ndm calm ~2–7% avg). Contrast: previous day pegged **100%** on `ndm`.
+
+**Also:** router **uptime ~4 min** at first sample → a **reboot** happened around the same time as the Station change. Relief may be from Station internet cut **and/or** reboot clearing `ndm` spin; both align with the observation.
+
+**Device:** `known host "yandex-station-lite …" b8:87:6e:e5:3b:46`. As of 2026-09-04 RC it was still `ip hotspot host b8:87:6e:e5:3b:46 permit` + `conform` (internet allowed). User later disabled/limited internet for it.
+
+**Prior destinations:** Keenetic Air has **no retained per-host destination/flow log** (no DPI capture kept). Cannot reconstruct where the Station sent packets earlier—only MAC identity + that it was permitted. Typical Station traffic (not observed here) is Yandex cloud/Alice/Quasar/music CDNs over HTTPS.
+
+## Follow-up 2026-09-05 — live conntrack while Station online
+
+Station **`yandex-station-lite`** `b8:87:6e:e5:3b:46` = **`192.168.2.103`**, `access=permit`, Wi‑Fi Home, traffic growing.
+
+Live `show ip conntrack` (filtered `src=192.168.2.103`), ~11 min / 20 samples via VPS (`/tmp/air_station_fresh.py`):
+
+| Dest | rDNS | Proto/port | Notes |
+|------|------|------------|-------|
+| 213.180.193.76 | `uniproxy.alice.yandex.net` | TCP/443 | **Main volume** (~138KB↑ / ~208KB↓ conntrack max) — Alice voice/proxy |
+| 213.180.204.179 | `xiva-daria.stable.qloud-b.yandex.net` | TCP/443 | Yandex XIVA push |
+| 213.180.193.230 | `quasar.yandex.net` | ICMP echo (+ TCP/443 in earlier sample) | Quasar keepalive ping every sample |
+| 213.180.193.226 | `report.appmetrica.yandex.net` | TCP/443 | AppMetrica |
+| 93.158.134.32 | `clck.yandex.net` | TCP/443 | Yandex click/metrics |
+| 213.180.193.9 | `scbh.yandex.net` | TCP/80 | Yandex HTTP |
+| 192.168.2.1 | router | UDP/53 | DNS via Keenetic |
+| 224.0.0.251 | mDNS | IGMP | LAN discovery |
+| 92.255.126.143 | (none) | UDP/123 | NTP |
+
+Hotspot host counters during window: rx **491183→549229**, tx **311581→366870**. CPU samples **2–57%** (often ~3–7%, spikes to 29–57%; **not** pegged 100%). All internet destinations are **Yandex Alice/Quasar/XIVA/AppMetrica**, not WG/YouTube. No config changes.
+
+## Follow-up 2026-09-05 — AnyDesk + Cursor broken on Air (split-tunnel gap)
+
+**Symptom:** on Air Wi‑Fi, AnyDesk dead and Cursor shows `permission_denied` / region unavailable. On operator router + full VPN client — OK.
+
+**Cause:** Air had FQDN `cursor.com` / `cursor.sh` / `cursorapi.com` in `awg-fi`, but apps often bypass router DNS → need **IP statics**. Air lacked Viva’s `!anydesk-cursor` / `!anydesk-relay` routes and Cloudflare/AWS covers for Cursor API.
+
+**Applied on Air WG1 (saved):** Viva anydesk-cursor set — `92.223.88.0/24`, `195.181.160.0/20`, `185.229.0.0/16`, `141.95.128.0/17`, `76.76.0.0/16`, `100.56.0.0/16`, `32.193.0.0/16`, `148.113.0.0/16`; Cloudflare `104.16.0.0/12`; curated Cursor `api2` AWS `/16`s (`3.229`, `44.196`, `44.218`, `52.3`, `52.20`, `52.205`, `52.207`, `54.88`, `54.225`, `98.84`, `100.24`, `100.62`, `100.63`). WG1 statics ~44 → ~66.
+
+**FQDN `awg-fi`:** added `anydesk.com`, `net.anydesk.com`, `todesktop.com`, `workos.com`. Mid-apply the group briefly collapsed; restored full include list (~126) from pre-change RC backup (`/tmp/air_rc_anydesk.txt` on VPS). `dns-proxy route object-group awg-fi Wireguard1` intact.
+
+**Note:** add FQDN includes one-at-a-time via `parse` (multiline batches fail / can mangle group). Structured `ip/route/{dest}` RCI returns “not found”; use `parse` `ip route <cidr> Wireguard1 auto`.
+
+## Follow-up 2026-09-05 evening — Cursor still region-blocked; CPU spikes
+
+**Symptom:** AnyDesk OK after morning statics; Cursor still `Server Error (403): not available in your region`. Air CPU graph spikes to **100%** (nginx/ndm).
+
+**Cause:** Cursor `api2*.cursor.sh` AWS IPs rotate across many `/16`s — morning curated list left ~30 live A-records uncovered. Also Cloudflare auth uses `172.64/13` (not only `104.16/12`). Broad leftover Apple/GCP statics (`17/8`, `34.64/10`, `35.184/13`, `66.220/16`) were still on Air and inflate ASC/CPU.
+
+**Applied (saved):**
+- Expanded Cursor/AWS/CF WG1 covers (e.g. `52.0/11`, `52.192/11`, `54.64/11`, `54.160/11`, `54.192/11`, `54.224/11`, `100.16/12`, `100.48/12`, `34.192/10`, `18.192–18.232` blocks, `13.248/14`, `35.71/16`, `35.144/12`, `35.168/13`, `172.64/13`, `66.33.60/23`, …). Spot-check: **43/43** resolved Cursor A-records covered.
+- Removed CPU-heavy leftovers: `17.0.0.0/8`, `34.64.0.0/10`, `35.184.0.0/13`, `66.220.0.0/16` (+ mistaken `184.72/15`).
+- Cleared IPv6 addresses on ISP (`FastEthernet0/Vlan2`) — AAAA for api3/auth can otherwise bypass IPv4 WG statics. Autoconf may return; if Cursor still fails, disable IPv6 on the PC or ISP.
+- Raised `nf_conntrack_max` toward 65536 (connfree was already high; not the bottleneck).
+
+**CPU note:** process samples showed `nginx` spikes + `ndm` avg ~30%; not a wireguard userspace process. Re-test Cursor after full app restart on Air Wi‑Fi.
