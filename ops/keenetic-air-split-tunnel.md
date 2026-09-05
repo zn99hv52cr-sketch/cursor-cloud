@@ -88,3 +88,22 @@ Running-config backup kept on VPS as `air-rc-backup-pre-5.2A7-*.txt`.
 **Device:** `known host "yandex-station-lite …" b8:87:6e:e5:3b:46`. As of 2026-09-04 RC it was still `ip hotspot host b8:87:6e:e5:3b:46 permit` + `conform` (internet allowed). User later disabled/limited internet for it.
 
 **Prior destinations:** Keenetic Air has **no retained per-host destination/flow log** (no DPI capture kept). Cannot reconstruct where the Station sent packets earlier—only MAC identity + that it was permitted. Typical Station traffic (not observed here) is Yandex cloud/Alice/Quasar/music CDNs over HTTPS.
+
+## Follow-up 2026-09-05 — live conntrack while Station online
+
+Station **`yandex-station-lite`** `b8:87:6e:e5:3b:46` = **`192.168.2.103`**, `access=permit`, Wi‑Fi Home, traffic growing.
+
+Live `show ip conntrack` (filtered `src=192.168.2.103`):
+
+| Dest | rDNS | Proto/port | Notes |
+|------|------|------------|-------|
+| 213.180.193.76 | `uniproxy.alice.yandex.net` | TCP/443 | **Main volume** (~90KB↑ / ~180KB↓) — Alice voice/proxy |
+| 213.180.193.230 | `quasar.yandex.net` | ICMP echo + TCP/443 | Quasar cloud; **continuous ping** |
+| 213.180.204.179 | `xiva-daria.stable.qloud-b.yandex.net` | TCP/443 | Yandex XIVA push |
+| 93.158.134.32 | `clck.yandex.net` | TCP/443 | Yandex click/metrics |
+| 213.180.193.9 | `scbh.yandex.net` | TCP/80 | Yandex HTTP |
+| 192.168.2.1 | router | UDP/53 | DNS via Keenetic |
+| 224.0.0.251 | mDNS | IGMP | LAN discovery |
+| 92.255.126.143 | (none) | UDP/123 | NTP |
+
+CPU while online sampled earlier ~2–49% (not pegged 100%). All internet destinations above are **Yandex AS / Quasar-Alice stack**, not WG/YouTube.
