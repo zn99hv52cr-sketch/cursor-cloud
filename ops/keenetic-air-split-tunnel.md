@@ -120,3 +120,17 @@ Hotspot host counters during window: rx **491183→549229**, tx **311581→36687
 **FQDN `awg-fi`:** added `anydesk.com`, `net.anydesk.com`, `todesktop.com`, `workos.com`. Mid-apply the group briefly collapsed; restored full include list (~126) from pre-change RC backup (`/tmp/air_rc_anydesk.txt` on VPS). `dns-proxy route object-group awg-fi Wireguard1` intact.
 
 **Note:** add FQDN includes one-at-a-time via `parse` (multiline batches fail / can mangle group). Structured `ip/route/{dest}` RCI returns “not found”; use `parse` `ip route <cidr> Wireguard1 auto`.
+
+## Follow-up 2026-09-05 evening — Cursor still region-blocked; CPU spikes
+
+**Symptom:** AnyDesk OK after morning statics; Cursor still `Server Error (403): not available in your region`. Air CPU graph spikes to **100%** (nginx/ndm).
+
+**Cause:** Cursor `api2*.cursor.sh` AWS IPs rotate across many `/16`s — morning curated list left ~30 live A-records uncovered. Also Cloudflare auth uses `172.64/13` (not only `104.16/12`). Broad leftover Apple/GCP statics (`17/8`, `34.64/10`, `35.184/13`, `66.220/16`) were still on Air and inflate ASC/CPU.
+
+**Applied (saved):**
+- Expanded Cursor/AWS/CF WG1 covers (e.g. `52.0/11`, `52.192/11`, `54.64/11`, `54.160/11`, `54.192/11`, `54.224/11`, `100.16/12`, `100.48/12`, `34.192/10`, `18.192–18.232` blocks, `13.248/14`, `35.71/16`, `35.144/12`, `35.168/13`, `172.64/13`, `66.33.60/23`, …). Spot-check: **43/43** resolved Cursor A-records covered.
+- Removed CPU-heavy leftovers: `17.0.0.0/8`, `34.64.0.0/10`, `35.184.0.0/13`, `66.220.0.0/16` (+ mistaken `184.72/15`).
+- Cleared IPv6 addresses on ISP (`FastEthernet0/Vlan2`) — AAAA for api3/auth can otherwise bypass IPv4 WG statics. Autoconf may return; if Cursor still fails, disable IPv6 on the PC or ISP.
+- Raised `nf_conntrack_max` toward 65536 (connfree was already high; not the bottleneck).
+
+**CPU note:** process samples showed `nginx` spikes + `ndm` avg ~30%; not a wireguard userspace process. Re-test Cursor after full app restart on Air Wi‑Fi.
