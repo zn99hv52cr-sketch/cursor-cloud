@@ -108,3 +108,15 @@ Live `show ip conntrack` (filtered `src=192.168.2.103`), ~11 min / 20 samples vi
 | 92.255.126.143 | (none) | UDP/123 | NTP |
 
 Hotspot host counters during window: rx **491183→549229**, tx **311581→366870**. CPU samples **2–57%** (often ~3–7%, spikes to 29–57%; **not** pegged 100%). All internet destinations are **Yandex Alice/Quasar/XIVA/AppMetrica**, not WG/YouTube. No config changes.
+
+## Follow-up 2026-09-05 — AnyDesk + Cursor broken on Air (split-tunnel gap)
+
+**Symptom:** on Air Wi‑Fi, AnyDesk dead and Cursor shows `permission_denied` / region unavailable. On operator router + full VPN client — OK.
+
+**Cause:** Air had FQDN `cursor.com` / `cursor.sh` / `cursorapi.com` in `awg-fi`, but apps often bypass router DNS → need **IP statics**. Air lacked Viva’s `!anydesk-cursor` / `!anydesk-relay` routes and Cloudflare/AWS covers for Cursor API.
+
+**Applied on Air WG1 (saved):** Viva anydesk-cursor set — `92.223.88.0/24`, `195.181.160.0/20`, `185.229.0.0/16`, `141.95.128.0/17`, `76.76.0.0/16`, `100.56.0.0/16`, `32.193.0.0/16`, `148.113.0.0/16`; Cloudflare `104.16.0.0/12`; curated Cursor `api2` AWS `/16`s (`3.229`, `44.196`, `44.218`, `52.3`, `52.20`, `52.205`, `52.207`, `54.88`, `54.225`, `98.84`, `100.24`, `100.62`, `100.63`). WG1 statics ~44 → ~66.
+
+**FQDN `awg-fi`:** added `anydesk.com`, `net.anydesk.com`, `todesktop.com`, `workos.com`. Mid-apply the group briefly collapsed; restored full include list (~126) from pre-change RC backup (`/tmp/air_rc_anydesk.txt` on VPS). `dns-proxy route object-group awg-fi Wireguard1` intact.
+
+**Note:** add FQDN includes one-at-a-time via `parse` (multiline batches fail / can mangle group). Structured `ip/route/{dest}` RCI returns “not found”; use `parse` `ip route <cidr> Wireguard1 auto`.
