@@ -19,6 +19,8 @@ pdfmetrics.registerFont(TTFont("DejaVu", FONT_REG))
 pdfmetrics.registerFont(TTFont("DejaVuBold", FONT_BOLD))
 
 OUT = Path(__file__).with_name("Antiformalisticheskiy_raek_2str_krupny_shrift.pdf")
+OUT_RU = Path(__file__).with_name("Раек_2_страницы.pdf")
+OUT_ROOT = Path(__file__).resolve().parents[2] / "Raek_2_pages.pdf"
 
 TITLE = "Антиформалистический раек"
 SPEAKER = "Начальник ОМБ:"
@@ -27,8 +29,7 @@ PARAS = [
     "Сегодня на повестке дня обсуждение музыкального сочинения, которое попало к нам благодаря бдительности нашего ценного сотрудника!",
     "Должен сообщить, что «Рукопись данного сочинения была обнаружена в ящике с нечистотами кандидатом изящных наук П.&nbsp;И.&nbsp;Опостыловым. Тщательно отделив от рукописи прилипшие к ней нечистоты, тов.&nbsp;Опостылов, предварительно изучив её (рукопись), передал нам.",
     "Судя по всему, это произведение, по причинам мне неизвестным, осталось незаконченным. Несмотря на принятые меры (были опрошены все композиторы, писатели и поэты), авторов (автора?) музыки и текста обнаружить не удалось. Однако выдающиеся качества как музыки, так и текста заставляют нас считать, что мы имеем дело с выдающимся произведением.",
-    "Композитор (…хотя не лишено возможности, что композитор и поэт являются одним лицом) мастерски использует народное творчество. Музыка органически сливается с текстом, изобилующим глубокими мыслями, вытекающими из вдохновляющих указаний.",
-    "Превосходно отточенный стих заставляет думать о разносторонности дарования автора текста. В живой и ясной форме выступают три оратора, участники свободной дискуссии: И.&nbsp;С.&nbsp;Единицын, А.&nbsp;А.&nbsp;Двойкин и Д.&nbsp;Т.&nbsp;Тройкин.",
+    "Композитор (…хотя не лишено возможности, что композитор и поэт являются одним лицом) мастерски использует народное творчество. Музыка органически сливается с текстом, изобилующим глубокими мыслями, вытекающими из вдохновляющих указаний. Превосходно отточенный стих заставляет думать о разносторонности дарования автора текста. В живой и ясной форме выступают три оратора, участники свободной дискуссии: И.&nbsp;С.&nbsp;Единицын, А.&nbsp;А.&nbsp;Двойкин и Д.&nbsp;Т.&nbsp;Тройкин.",
     "Автор как бы вводит нас во Дворец Культуры, на собрание, посвящённое жгучей проблеме современности; а именно, борьбе реалистического направления в музыке с формалистическим направлением в ней же.",
     "Тонким сатирическим штрихом («народу у нас сегодня маловато»), он едко высмеивает некоторых горекультработников, не умеющих привлечь внимание жадных до культуры наших посетителей клубов к жгучим проблемам музыкознания и языкознания. Особенно убедительно композитор излагает наиболее значительные мысли текста. Где идет речь о мелодичности, музыка мелодична. Где речь идет об изящности&nbsp;— музыка изящна. Именно так, и только так должны сливаться музыка и текст.",
     "Не все, однако, удалось автору музыки. Он неправильно артикулирует Римский-Корсáков, хотя всему миру известно, что надо произносить Римский-Корсакóв (см.&nbsp;речь на Съезде композиторов). Это является крупным, но не решающим недостатком данного произведения. Основные достоинства произведения, его предельная ясность, с которой автор как бы вкладывает в рот полный взволнованной страстности афоризм…",
@@ -56,37 +57,38 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_mark(self, page_count):
         page = self._pageNumber
-        self.setFont("DejaVu", 10)
-        self.setFillColorRGB(0.25, 0.25, 0.25)
-        self.drawRightString(A4[0] - 12 * mm, 8 * mm, f"{page} / {page_count}")
+        self.setFillColorRGB(0.35, 0.35, 0.35)
         self.setFont("DejaVu", 8)
-        side = "левый лист папки" if page == 1 else "правый лист папки"
-        self.drawString(12 * mm, 8 * mm, side)
+        self.drawRightString(A4[0] - 8 * mm, 6 * mm, f"{page}/{page_count}")
+        side = "лево" if page == 1 else "право"
+        self.drawString(8 * mm, 6 * mm, side)
 
 
-def build(font_size: float, out_path: Path, leading_ratio: float = 1.28) -> int:
+def build(
+    font_size: float,
+    out_path: Path,
+    leading_ratio: float = 1.08,
+    para_gap_ratio: float = 0.05,
+) -> int:
     leading = font_size * leading_ratio
-    title_size = font_size + 3
-    speaker_size = font_size + 1
-
     styles = {
         "title": ParagraphStyle(
             "title",
             fontName="DejaVuBold",
-            fontSize=title_size,
-            leading=title_size * 1.15,
+            fontSize=font_size,
+            leading=leading,
             alignment=TA_CENTER,
-            spaceAfter=4,
+            spaceAfter=1,
             textColor=(0, 0, 0),
         ),
         "speaker": ParagraphStyle(
             "speaker",
             fontName="DejaVuBold",
-            fontSize=speaker_size,
-            leading=speaker_size * 1.2,
+            fontSize=font_size,
+            leading=leading,
             alignment=TA_LEFT,
-            spaceBefore=2,
-            spaceAfter=8,
+            spaceBefore=0,
+            spaceAfter=font_size * para_gap_ratio,
             textColor=(0, 0, 0),
         ),
         "body": ParagraphStyle(
@@ -95,7 +97,7 @@ def build(font_size: float, out_path: Path, leading_ratio: float = 1.28) -> int:
             fontSize=font_size,
             leading=leading,
             alignment=TA_LEFT,
-            spaceAfter=font_size * 0.28,
+            spaceAfter=font_size * para_gap_ratio,
             textColor=(0, 0, 0),
             firstLineIndent=0,
         ),
@@ -104,10 +106,10 @@ def build(font_size: float, out_path: Path, leading_ratio: float = 1.28) -> int:
     doc = SimpleDocTemplate(
         str(out_path),
         pagesize=A4,
-        leftMargin=10 * mm,
-        rightMargin=10 * mm,
-        topMargin=9 * mm,
-        bottomMargin=14 * mm,
+        leftMargin=6 * mm,
+        rightMargin=6 * mm,
+        topMargin=6 * mm,
+        bottomMargin=8 * mm,
         title="Антиформалистический раек — чтение (крупный шрифт, 2 стр.)",
         author="по тексту CamScanner 17.09.2026",
     )
@@ -123,13 +125,18 @@ def build(font_size: float, out_path: Path, leading_ratio: float = 1.28) -> int:
     return len(PdfReader(str(out_path)).pages)
 
 
+def write_all(size: float, lead: float, gap: float) -> None:
+    build(size, OUT, lead, gap)
+    OUT_RU.write_bytes(OUT.read_bytes())
+    OUT_ROOT.write_bytes(OUT.read_bytes())
+
+
 def main():
-    # 18.2 pt fills the left sheet to the bottom and ends on a paragraph
-    # (after «в ней же.»). 18.4 pt is larger but splits a sentence across
-    # the folder fold.
-    size, lead = 18.2, 1.16
-    pages = build(size, OUT, lead)
-    print(f"font={size}pt leading={lead} pages={pages} -> {OUT}")
+    # Largest size that still fits on exactly 2 A4 sheets.
+    size, lead, gap = 20.2, 1.08, 0.05
+    write_all(size, lead, gap)
+    pages = len(PdfReader(str(OUT)).pages)
+    print(f"font={size}pt leading={lead} gap={gap} pages={pages} -> {OUT}")
     if pages != 2:
         raise SystemExit(f"expected 2 pages, got {pages}")
 
