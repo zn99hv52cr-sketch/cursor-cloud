@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import html
 import json
 import logging
@@ -10,8 +11,10 @@ import os
 import re
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
@@ -40,7 +43,20 @@ REMNAWAVE_NODE_UUID = os.environ.get("REMNAWAVE_NODE_UUID", "").strip()
 REMNAWAVE_PROFILE_UUID = os.environ.get("REMNAWAVE_PROFILE_UUID", "").strip()
 REMNAWAVE_BLOCK_DURATION = int(os.environ.get("REMNAWAVE_BLOCK_DURATION", "3600"))
 
-BT_BLOCK_RULE = {"protocol": ["bittorrent"], "outboundTag": "BLOCK"}
+BT_BLOCK_RULE = {
+    "protocol": ["bittorrent"],
+    "outboundTag": "TORRENT_CUT",
+    "ruleTag": "TORRENT_CUT",
+}
+TORRENT_CUT_OUTBOUND = {"tag": "TORRENT_CUT", "protocol": "blackhole"}
+TORRENT_ALERT_POLL_SEC = int(os.environ.get("TORRENT_ALERT_POLL_SEC", "15"))
+TORRENT_ALERT_COOLDOWN_SEC = int(os.environ.get("TORRENT_ALERT_COOLDOWN_SEC", "300"))
+TORRENT_ALERT_STATE_FILE = os.environ.get(
+    "TORRENT_ALERT_STATE_FILE", "/app/data/torrent_alerts_state.json"
+)
+TORRENT_ACCESS_LOG = os.environ.get(
+    "TORRENT_ACCESS_LOG", "/var/log/remnanode/access.log"
+)
 
 HELP_TEXT = """SharpVpn Ops Bot
 
@@ -49,6 +65,7 @@ HELP_TEXT = """SharpVpn Ops Bot
 /reboot — перезагрузка FI (Финляндия)
 /myid — ваш chat_id
 
+При срезе ВКЛ бот шлёт алерт в этот чат, кто ловится на bittorrent.
 Перезагрузка требует подтверждения кнопкой."""
 
 
@@ -324,7 +341,9 @@ def get_active_profile_uuid() -> str:
 
 def _is_bt_block_rule(rule: dict) -> bool:
     protos = rule.get("protocol") or []
-    return "bittorrent" in protos and rule.get("outboundTag") == "BLOCK"
+    if "bittorrent" not in protos:
+        return False
+    return rule.get("outboundTag") in {"TORRENT_CUT", "BLOCK"}
 
 
 def get_profile_config(profile_uuid: str) -> dict:
@@ -345,9 +364,21 @@ def get_torrent_cut_enabled() -> bool:
 
 
 def set_torrent_cut_enabled(enabled: bool) -> bool:
-    """Toggle Xray routing rule bittorrent→BLOCK. Never enables IP-ban plugin."""
+    """Toggle Xray routing rule bittorrent→TORRENT_CUT. Never enables IP-ban plugin."""
     profile_uuid = get_active_profile_uuid()
     config = get_profile_config(profile_uuid)
+
+    # Keep/ensure dedicated blackhole + access log for alerts (no IP ban).
+    config["log"] = {
+        "access": "/var/log/remnanode/access.log",
+        "error": "/var/log/remnanode/error.log",
+        "loglevel": (config.get("log") or {}).get("loglevel") or "warning",
+    }
+    outbounds = list(config.get("outbounds") or [])
+    if not any(o.get("tag") == "TORRENT_CUT" for o in outbounds if isinstance(o, dict)):
+        outbounds.append(dict(TORRENT_CUT_OUTBOUND))
+    config["outbounds"] = outbounds
+
     routing = dict(config.get("routing") or {})
     rules = [r for r in (routing.get("rules") or []) if not _is_bt_block_rule(r)]
     if enabled:
@@ -365,7 +396,6 @@ def set_torrent_cut_enabled(enabled: bool) -> bool:
         f"/api/nodes/{REMNAWAVE_NODE_UUID}/actions/restart",
         {"forceRestart": False},
     )
-    # Keep Remnawave IP-ban plugin off if configured.
     try:
         ensure_ip_ban_plugin_off()
     except Exception as exc:
@@ -402,6 +432,197 @@ def ensure_ip_ban_plugin_off() -> None:
     )
 
 
+def lookup_user_by_id(user_id: str | int) -> dict | None:
+    try:
+        payload = remnawave_request("GET", f"/api/users/{user_id}")
+        user = payload.get("response")
+        return user if isinstance(user, dict) else None
+    except Exception as exc:
+        log.warning("user lookup %s failed: %s", user_id, exc)
+        return None
+
+
+_ACCESS_TORRENT_RE = re.compile(
+    r"^(?P<ts>\S+ \S+)\s+from\s+(?:tcp:|udp:)?(?P<source>\S+)\s+"
+    r"(?P<action>accepted|rejected)\s+(?P<dest>\S+)\s+"
+    r"\[(?P<inbound>[^\]>]+)>>(?P<outbound>[^\]]+)\]\s+email:\s*(?P<email>\S+)",
+    re.IGNORECASE,
+)
+
+
+def parse_torrent_cut_line(line: str) -> dict | None:
+    if "TORRENT_CUT" not in line:
+        return None
+    m = _ACCESS_TORRENT_RE.search(line.strip())
+    if not m:
+        # Fallback: at least grab email + outbound
+        if ">> TORRENT_CUT" not in line and ">>TORRENT_CUT" not in line.replace(" ", ""):
+            if "TORRENT_CUT" not in line:
+                return None
+        email_m = re.search(r"email:\s*(\S+)", line)
+        if not email_m:
+            return None
+        return {
+            "ts": line[:26].strip(),
+            "source": "?",
+            "action": "?",
+            "dest": "?",
+            "inbound": "?",
+            "outbound": "TORRENT_CUT",
+            "email": email_m.group(1),
+            "raw": line.strip(),
+        }
+    return {
+        "ts": m.group("ts"),
+        "source": m.group("source"),
+        "action": m.group("action"),
+        "dest": m.group("dest"),
+        "inbound": m.group("inbound").strip(),
+        "outbound": m.group("outbound").strip(),
+        "email": m.group("email"),
+        "raw": line.strip(),
+    }
+
+
+def load_alert_state() -> dict:
+    path = Path(TORRENT_ALERT_STATE_FILE)
+    try:
+        if path.exists():
+            data = json.loads(path.read_text())
+            if isinstance(data, dict):
+                return data
+    except Exception as exc:
+        log.warning("alert state read failed: %s", exc)
+    return {"inode": None, "offset": 0, "last_alert_by_user": {}}
+
+
+def save_alert_state(state: dict) -> None:
+    path = Path(TORRENT_ALERT_STATE_FILE)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(state))
+    except Exception as exc:
+        log.warning("alert state write failed: %s", exc)
+
+
+def format_torrent_alert(hit: dict, user: dict | None) -> str:
+    username = (user or {}).get("username") or "—"
+    user_id = (user or {}).get("id") or hit.get("email") or "—"
+    status = (user or {}).get("status") or "—"
+    short = (user or {}).get("shortUuid") or "—"
+    return (
+        "<b>🚨 Torrent / P2P детект</b>\n\n"
+        f"👤 User: <code>{esc(str(username))}</code>\n"
+        f"🆔 ID: <code>{esc(str(user_id))}</code>\n"
+        f"📎 shortUuid: <code>{esc(str(short))}</code>\n"
+        f"📶 Status: <code>{esc(str(status))}</code>\n\n"
+        f"⏱ {esc(str(hit.get('ts') or '—'))}\n"
+        f"📥 Inbound: <code>{esc(str(hit.get('inbound') or '—'))}</code>\n"
+        f"🎯 Dest: <code>{esc(str(hit.get('dest') or '—'))}</code>\n"
+        f"🔌 Action: <code>{esc(str(hit.get('action') or '—'))}</code> → "
+        f"<code>{esc(str(hit.get('outbound') or 'TORRENT_CUT'))}</code>\n\n"
+        "IP не баним — только срез bittorrent → TORRENT_CUT."
+    )
+
+
+async def send_torrent_alerts(application: Application, hits: list[dict]) -> None:
+    if not hits or not ALLOWED_CHAT_IDS:
+        return
+    for hit in hits:
+        user = None
+        email = hit.get("email")
+        if email and str(email).isdigit():
+            user = await asyncio.to_thread(lookup_user_by_id, email)
+        text = format_torrent_alert(hit, user)
+        for chat_id in ALLOWED_CHAT_IDS:
+            try:
+                await application.bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    parse_mode="HTML",
+                    disable_web_page_preview=True,
+                )
+            except Exception as exc:
+                log.warning("alert send to %s failed: %s", chat_id, exc)
+
+
+def scan_torrent_access_log(state: dict) -> tuple[list[dict], dict]:
+    path = Path(TORRENT_ACCESS_LOG)
+    if not path.exists():
+        return [], state
+
+    st = path.stat()
+    inode = getattr(st, "st_ino", None)
+    size = st.st_size
+    offset = int(state.get("offset") or 0)
+    if state.get("inode") != inode or offset > size:
+        offset = 0
+
+    hits: list[dict] = []
+    with path.open("r", errors="replace") as fh:
+        fh.seek(offset)
+        for line in fh:
+            parsed = parse_torrent_cut_line(line)
+            if not parsed:
+                continue
+            hits.append(parsed)
+        new_offset = fh.tell()
+
+    now = int(time.time())
+    last_map = dict(state.get("last_alert_by_user") or {})
+    filtered: list[dict] = []
+    for hit in hits:
+        key = str(hit.get("email") or hit.get("raw"))
+        prev = int(last_map.get(key) or 0)
+        if now - prev < TORRENT_ALERT_COOLDOWN_SEC:
+            continue
+        last_map[key] = now
+        filtered.append(hit)
+
+    # prune old cooldown entries
+    last_map = {
+        k: v
+        for k, v in last_map.items()
+        if now - int(v) < max(TORRENT_ALERT_COOLDOWN_SEC * 3, 3600)
+    }
+    state = {
+        "inode": inode,
+        "offset": new_offset,
+        "last_alert_by_user": last_map,
+    }
+    return filtered, state
+
+
+async def torrent_alert_watcher(application: Application) -> None:
+    log.info(
+        "torrent alert watcher started (log=%s poll=%ss cooldown=%ss)",
+        TORRENT_ACCESS_LOG,
+        TORRENT_ALERT_POLL_SEC,
+        TORRENT_ALERT_COOLDOWN_SEC,
+    )
+    # Skip historical lines on first start
+    state = load_alert_state()
+    path = Path(TORRENT_ACCESS_LOG)
+    if path.exists() and not state.get("offset"):
+        st = path.stat()
+        state = {
+            "inode": getattr(st, "st_ino", None),
+            "offset": st.st_size,
+            "last_alert_by_user": {},
+        }
+        save_alert_state(state)
+
+    while True:
+        try:
+            hits, state = await asyncio.to_thread(scan_torrent_access_log, state)
+            save_alert_state(state)
+            if hits:
+                await send_torrent_alerts(application, hits)
+        except Exception:
+            log.exception("torrent alert watcher iteration failed")
+        await asyncio.sleep(max(5, TORRENT_ALERT_POLL_SEC))
+
+
 def torrent_keyboard(cut_on: bool) -> InlineKeyboardMarkup:
     toggle_label = "🔴 Выключить срез" if cut_on else "🟢 Включить срез"
     toggle_data = "torrent:off" if cut_on else "torrent:on"
@@ -421,7 +642,8 @@ def torrent_status_text(cut_on: bool, note: str = "") -> str:
         "<b>✂️ Срез bittorrent</b>\n\n"
         f"Статус: {state}\n"
         "Без бана юзеров и без бана IP.\n"
-        "Правило в профиле: <code>bittorrent → BLOCK</code>."
+        "Правило: <code>bittorrent → TORRENT_CUT</code>.\n"
+        "Алерты в этот чат при детекте (из access.log)."
     )
     if note:
         text += f"\n\n{esc(note)}"
@@ -592,7 +814,15 @@ async def post_init(application: Application) -> None:
         ]
     )
     await application.bot.set_my_description(
-        "Мониторинг FI VPN, срез torrent-трафика и перезагрузка по запросу."
+        "Мониторинг FI VPN, срез torrent-трафика, алерты и перезагрузка."
+    )
+    try:
+        ensure_ip_ban_plugin_off()
+    except Exception as exc:
+        log.warning("startup ensure IP-ban off failed: %s", exc)
+    # Keep a strong reference so the task is not GC'd.
+    application.bot_data["torrent_alert_task"] = asyncio.create_task(
+        torrent_alert_watcher(application)
     )
 
 
