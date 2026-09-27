@@ -228,12 +228,16 @@ def build_status_text() -> str:
     checks.append(awg_dacha_handshake())
     torrent_line = (
         "\n\n<b>P2P / torrent</b>\n"
-        "✂️ срез bittorrent → BLOCK (без бана IP) — /torrent"
+        "🟢 срез bittorrent → BLOCK уже ВКЛ\n"
+        "🔴 IP-ban ВЫКЛ — /torrent"
     )
     try:
-        ip_ban = get_torrent_blocker_enabled()
-        if ip_ban:
-            torrent_line += "\n⚠️ IP-ban плагин сейчас ON (нежелательно)"
+        if get_torrent_blocker_enabled():
+            torrent_line = (
+                "\n\n<b>P2P / torrent</b>\n"
+                "🟢 срез bittorrent → BLOCK уже ВКЛ\n"
+                "⚠️ IP-ban плагин ON (нежелательно) — /torrent"
+            )
     except Exception:
         pass
     return (
@@ -364,14 +368,18 @@ def torrent_keyboard(ip_ban: bool) -> InlineKeyboardMarkup:
 
 
 def torrent_status_text(ip_ban: bool, note: str = "") -> str:
-    ban_state = "⚠️ <b>ON</b> (временный бан IP)" if ip_ban else "✅ <b>OFF</b>"
+    ban_line = (
+        "⚠️ IP-ban плагин: <b>ВКЛ</b> (банит IP на час) — лучше выключить"
+        if ip_ban
+        else "🔴 IP-ban плагин: <b>ВЫКЛ</b> — так и задумано"
+    )
     text = (
         "<b>✂️ P2P / torrent</b>\n\n"
-        "Режим: <b>только срез трафика</b> (без бана юзеров/IP).\n"
+        "🟢 Срез трафика: <b>ВКЛ</b> (уже работает)\n"
+        f"{ban_line}\n\n"
         "В профиле Xray: <code>bittorrent → BLOCK</code>.\n"
-        "Sniffing включён — распознанный bittorrent уходит в blackhole.\n\n"
-        f"IP-ban плагин Remnawave: {ban_state}\n"
-        "Плагин намеренно не используем: он банит IP на час."
+        "Sniffing ловит bittorrent → blackhole.\n"
+        "Юзеров и IP не баним. Отдельно «включать» срез не нужно."
     )
     if note:
         text += f"\n\n{esc(note)}"
