@@ -1,6 +1,6 @@
 # SharpVpn Ops Bot (`vpn-bot`)
 
-Telegram bot on FI VPS: `/status`, `/reboot`, `/torrent` (Remnawave Torrent Blocker on/off).
+Telegram bot on FI VPS: `/status`, `/reboot`, `/torrent` (torrent policy info).
 
 ## Deploy path
 
@@ -22,7 +22,10 @@ REMNAWAVE_BLOCK_DURATION=3600
 
 Do not commit real tokens.
 
-## `/torrent`
+## Torrent policy
 
-Shows current Torrent Blocker state with inline **Включить / Выключить**.
-Toggle flow: `PATCH /api/node-plugins/` → `POST .../actions/sync` → soft node restart.
+Desired mode: **cut bittorrent only**, no temporary IP ban and no user disable.
+
+- Done in Xray config profile: routing rule `protocol: bittorrent` → outbound `BLOCK` (blackhole), with sniffing enabled.
+- Remnawave **Torrent Blocker plugin stays OFF** — that plugin always adds nftables IP ban for `blockDuration`.
+- `/torrent` is informational; bot will not turn IP-ban ON. It can only turn the plugin OFF if it was enabled elsewhere.

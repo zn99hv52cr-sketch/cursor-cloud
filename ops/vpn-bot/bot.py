@@ -42,7 +42,7 @@ REMNAWAVE_BLOCK_DURATION = int(os.environ.get("REMNAWAVE_BLOCK_DURATION", "3600"
 HELP_TEXT = """SharpVpn Ops Bot
 
 /status — состояние FI сервера
-/torrent — Torrent Blocker on/off
+/torrent — срез bittorrent (без бана IP)
 /reboot — перезагрузка FI (Финляндия)
 /myid — ваш chat_id
 
@@ -226,18 +226,16 @@ def format_docker_block(lines: list[tuple[str, bool, str]] | str) -> str:
 def build_status_text() -> str:
     checks = health_checks_local()
     checks.append(awg_dacha_handshake())
-    torrent_line = ""
+    torrent_line = (
+        "\n\n<b>P2P / torrent</b>\n"
+        "✂️ срез bittorrent → BLOCK (без бана IP) — /torrent"
+    )
     try:
-        enabled = get_torrent_blocker_enabled()
-        torrent_line = (
-            f"\n\n<b>Torrent Blocker</b>\n"
-            f"{'🟢 ON' if enabled else '🔴 OFF'} — /torrent"
-        )
-    except Exception as exc:
-        torrent_line = (
-            f"\n\n<b>Torrent Blocker</b>\n"
-            f"⚠️ статус недоступен: {esc(str(exc)[:120])}"
-        )
+        ip_ban = get_torrent_blocker_enabled()
+        if ip_ban:
+            torrent_line += "\n⚠️ IP-ban плагин сейчас ON (нежелательно)"
+    except Exception:
+        pass
     return (
         "<b>📡 SharpVPN — FI сервер</b>\n\n"
         f"🇫🇮 <b>Финляндия</b> <code>{esc(FI_IP)}</code>\n"
@@ -347,26 +345,33 @@ def set_torrent_blocker_enabled(enabled: bool) -> bool:
     return get_torrent_blocker_enabled()
 
 
-def torrent_keyboard(enabled: bool) -> InlineKeyboardMarkup:
-    toggle_label = "🔴 Выключить" if enabled else "🟢 Включить"
-    toggle_data = "torrent:off" if enabled else "torrent:on"
-    return InlineKeyboardMarkup(
-        [
+def torrent_keyboard(ip_ban: bool) -> InlineKeyboardMarkup:
+    # IP-ban intentionally not offered as primary action.
+    rows = [
+        [InlineKeyboardButton("🔄 Обновить", callback_data="torrent:refresh")]
+    ]
+    if ip_ban:
+        rows.insert(
+            0,
             [
-                InlineKeyboardButton(toggle_label, callback_data=toggle_data),
-                InlineKeyboardButton("🔄 Обновить", callback_data="torrent:refresh"),
-            ]
-        ]
-    )
+                InlineKeyboardButton(
+                    "🔴 Выключить IP-ban плагин",
+                    callback_data="torrent:off",
+                )
+            ],
+        )
+    return InlineKeyboardMarkup(rows)
 
 
-def torrent_status_text(enabled: bool, note: str = "") -> str:
-    state = "🟢 <b>ON</b>" if enabled else "🔴 <b>OFF</b>"
+def torrent_status_text(ip_ban: bool, note: str = "") -> str:
+    ban_state = "⚠️ <b>ON</b> (временный бан IP)" if ip_ban else "✅ <b>OFF</b>"
     text = (
-        "<b>🛡 Torrent Blocker</b>\n\n"
-        f"Статус: {state}\n"
-        f"Бан IP: <code>{REMNAWAVE_BLOCK_DURATION}</code> сек\n"
-        "Ловит bittorrent → репорт в панели + Telegram."
+        "<b>✂️ P2P / torrent</b>\n\n"
+        "Режим: <b>только срез трафика</b> (без бана юзеров/IP).\n"
+        "В профиле Xray: <code>bittorrent → BLOCK</code>.\n"
+        "Sniffing включён — распознанный bittorrent уходит в blackhole.\n\n"
+        f"IP-ban плагин Remnawave: {ban_state}\n"
+        "Плагин намеренно не используем: он банит IP на час."
     )
     if note:
         text += f"\n\n{esc(note)}"
@@ -418,24 +423,17 @@ async def cmd_torrent(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not is_allowed(update):
         await deny(update)
         return
-    if not remnawave_configured():
-        await update.message.reply_text(
-            "Remnawave API не настроен на боте "
-            "(REMNAWAVE_API_TOKEN / PLUGIN / NODE)."
-        )
-        return
-    try:
-        enabled = get_torrent_blocker_enabled()
-    except Exception as exc:
-        await update.message.reply_text(
-            f"Не удалось получить статус Torrent Blocker:\n<code>{esc(str(exc))}</code>",
-            parse_mode="HTML",
-        )
-        return
+    ip_ban = False
+    note = ""
+    if remnawave_configured():
+        try:
+            ip_ban = get_torrent_blocker_enabled()
+        except Exception as exc:
+            note = f"IP-ban статус недоступен: {exc}"
     await update.message.reply_text(
-        torrent_status_text(enabled),
+        torrent_status_text(ip_ban, note=note),
         parse_mode="HTML",
-        reply_markup=torrent_keyboard(enabled),
+        reply_markup=torrent_keyboard(ip_ban),
     )
 
 
@@ -468,43 +466,47 @@ async def on_torrent_callback(
     data = query.data or ""
     if data == "torrent:refresh":
         await query.answer("Обновляю…")
+        ip_ban = False
+        note = ""
+        if remnawave_configured():
+            try:
+                ip_ban = get_torrent_blocker_enabled()
+            except Exception as exc:
+                note = f"IP-ban статус недоступен: {exc}"
+        await query.edit_message_text(
+            torrent_status_text(ip_ban, note=note),
+            parse_mode="HTML",
+            reply_markup=torrent_keyboard(ip_ban),
+        )
+        return
+
+    # Only allow turning IP-ban OFF (emergency). Enabling via bot is disabled.
+    if data == "torrent:off":
+        await query.answer("Выключаю IP-ban…")
+        await query.edit_message_text("⏳ Выключаю IP-ban плагин…")
         try:
-            enabled = get_torrent_blocker_enabled()
+            enabled = set_torrent_blocker_enabled(False)
+            note = "IP-ban выключен." if not enabled else "Не выключился — проверьте панель."
             await query.edit_message_text(
-                torrent_status_text(enabled),
+                torrent_status_text(enabled, note=note),
                 parse_mode="HTML",
                 reply_markup=torrent_keyboard(enabled),
             )
         except Exception as exc:
             await query.edit_message_text(
-                f"Ошибка чтения статуса:\n<code>{esc(str(exc))}</code>",
+                f"Не удалось выключить IP-ban:\n<code>{esc(str(exc))}</code>",
                 parse_mode="HTML",
             )
         return
 
-    if data not in {"torrent:on", "torrent:off"}:
-        await query.answer("Неизвестная команда", show_alert=True)
+    if data == "torrent:on":
+        await query.answer(
+            "IP-ban отключён политикой: только срез bittorrent → BLOCK",
+            show_alert=True,
+        )
         return
 
-    want_on = data == "torrent:on"
-    await query.answer("Включаю…" if want_on else "Выключаю…")
-    await query.edit_message_text(
-        "⏳ Применяю Torrent Blocker "
-        f"{'ON' if want_on else 'OFF'} (sync + soft restart ноды)…"
-    )
-    try:
-        enabled = set_torrent_blocker_enabled(want_on)
-        note = "Готово." if enabled == want_on else "Статус после применения отличается — проверьте панель."
-        await query.edit_message_text(
-            torrent_status_text(enabled, note=note),
-            parse_mode="HTML",
-            reply_markup=torrent_keyboard(enabled),
-        )
-    except Exception as exc:
-        await query.edit_message_text(
-            f"Не удалось переключить Torrent Blocker:\n<code>{esc(str(exc))}</code>",
-            parse_mode="HTML",
-        )
+    await query.answer("Неизвестная команда", show_alert=True)
 
 
 def validate_config() -> None:
@@ -527,14 +529,14 @@ async def post_init(application: Application) -> None:
         [
             BotCommand("start", "Главное меню"),
             BotCommand("status", "Статус FI сервера"),
-            BotCommand("torrent", "Torrent Blocker on/off"),
+            BotCommand("torrent", "Срез bittorrent (без бана IP)"),
             BotCommand("reboot", "Перезагрузка FI"),
             BotCommand("myid", "Показать Telegram ID"),
             BotCommand("help", "Справка"),
         ]
     )
     await application.bot.set_my_description(
-        "Мониторинг FI VPN, Torrent Blocker и перезагрузка по запросу."
+        "Мониторинг FI VPN, срез torrent-трафика и перезагрузка по запросу."
     )
 
 
