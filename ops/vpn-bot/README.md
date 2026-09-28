@@ -2,6 +2,9 @@
 
 Telegram bot on FI VPS: `/status`, `/reboot`, `/torrent` (bittorrent cut on/off) + torrent alerts.
 
+For continuing work in **Cursor Desktop (local, not Cloud)**, open
+[`ops/LOCAL-CHAT-HANDOFF.md`](../LOCAL-CHAT-HANDOFF.md) and attach it to a new Agent chat.
+
 ## Deploy path
 
 - Host: `193.124.224.248`
