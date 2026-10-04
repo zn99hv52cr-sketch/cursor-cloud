@@ -63,4 +63,14 @@ nslookup NAME 127.0.0.1
 - `level3.blizzard.com` / `blzddist1-a.akamaihd.net` → public Akamai (direct)
 - Load low (~0.2)
 
+## IPv6
+
+For this home setup (IPv4 LAN, podkop/VLESS, Tailscale) IPv6 is unnecessary.
+
+Already mostly off (`sysctl` disable + `dhcpv6`/`ra` disabled). Cleaned 2026-10-04:
+- removed `network.wan6`, ULA prefix
+- `lan`/`wan` `delegate=0`
+- removed IPv6 firewall allow rules (DHCPv6/MLD/ICMPv6)
+- kept `/etc/sysctl.d/99-disable-ipv6.conf`
+
 Do not commit Tailscale auth keys or VLESS URLs.
