@@ -63,6 +63,18 @@ nslookup NAME 127.0.0.1
 - `level3.blizzard.com` / `blzddist1-a.akamaihd.net` → public Akamai (direct)
 - Load low (~0.2)
 
+## Emergency VLESS bridge (2026-10-04 ~13:10 MSK)
+
+Home WAN IP `46.138.53.156` lost **all** reachability to FI VPS `193.124.224.248` (ping/TCP any port timeout; agent still OK). YouTube/Telegram FakeIP → VLESS broke.
+
+Temp fix while cloud agent runs:
+
+1. Agent SSH `-R 127.0.0.1:10443:193.124.224.248:443` to router (tmux `vps-rforward`)
+2. `podkop.main.proxy_string` host = `127.0.0.1:10443` (SNI/Host still `vpn2.sharpmaind.ru`)
+3. Clash delay ~600–650 ms
+
+**Reverts when agent dies.** Restore direct VPS path, then set proxy host back to `vpn2.sharpmaind.ru:443`. Needs VPS SSH (`SSHPASS`) to check ban/firewall for `46.138.53.156`.
+
 ## IPv6
 
 For this home setup (IPv4 LAN, podkop/VLESS, Tailscale) IPv6 is unnecessary.
