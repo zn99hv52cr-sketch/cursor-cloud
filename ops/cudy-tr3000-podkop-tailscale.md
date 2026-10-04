@@ -75,7 +75,7 @@ Home WAN `46.138.53.156` (MGTS) and Moscow check-host could not reach primary FI
 - Temporary Cloudflare quick tunnel (`/opt/cf-front/`, watchdog cron) can stay stopped; backup: `/root/backups/cf-front-20261004/`
 - Primary IP `193.124.224.248` still on the VPS (SSH/EU), but do not use it for RU clients
 
-**Note:** Cudy home may still be on KotiKey Reality fallback until podkop is pointed back to own VLESS `vpn2`.
+**Cudy restored (2026-10-04):** `podkop.main.proxy_string` → own VLESS WS `vpn2.sharpmaind.ru:443` `/vpn` (TLS/chrome). dnsmasq override `address=/vpn2.sharpmaind.ru/185.141.217.43` in `/etc/dnsmasq.d/vpn2-newip.conf`. Clash `main-out` delay ~147 ms. KotiKey Reality was temporary fallback only.
 ## IPv6
 
 For this home setup (IPv4 LAN, podkop/VLESS, Tailscale) IPv6 is unnecessary.
