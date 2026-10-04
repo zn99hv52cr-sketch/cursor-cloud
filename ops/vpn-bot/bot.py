@@ -32,7 +32,7 @@ ALLOWED_CHAT_IDS = {
     if x.strip().isdigit()
 }
 
-FI_IP = "193.124.224.248"
+FI_IP = "185.141.217.43"
 
 REMNAWAVE_BASE_URL = os.environ.get(
     "REMNAWAVE_BASE_URL", "https://vpn2.sharpmaind.ru"

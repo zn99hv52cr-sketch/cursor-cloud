@@ -74,6 +74,9 @@ Home WAN `46.138.53.156` (MGTS) and Moscow check-host could not reach primary FI
 - Moscow/SPb check-host TCP 443 to new IP: OK
 - Temporary Cloudflare quick tunnel (`/opt/cf-front/`, watchdog cron) can stay stopped; backup: `/root/backups/cf-front-20261004/`
 - Primary IP `193.124.224.248` still on the VPS (SSH/EU), but do not use it for RU clients
+- Remnawave hosts (97) → `185.141.217.43`
+- Telemt MTProxy panel `public_host` → `185.141.217.43` (was still advertising old IP in `tg://proxy` links)
+- Amnezia panel `servers[0].host` → `185.141.217.43` so generated AWG `Endpoint` is the new IP (was `127.0.0.1`)
 
 **Cudy restored (2026-10-04):** `podkop.main.proxy_string` → own VLESS WS `vpn2.sharpmaind.ru:443` `/vpn` (TLS/chrome). dnsmasq override `address=/vpn2.sharpmaind.ru/185.141.217.43` in `/etc/dnsmasq.d/vpn2-newip.conf`. Clash `main-out` delay ~147 ms. KotiKey Reality was temporary fallback only.
 ## IPv6

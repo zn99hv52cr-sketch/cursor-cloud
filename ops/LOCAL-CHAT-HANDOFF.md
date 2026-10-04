@@ -24,7 +24,7 @@ Branch: `cursor/vpn-bot-torrent-toggle-dead` (base: `master`)
 
 | Item | Value |
 |------|--------|
-| Host | `193.124.224.248` (`sharpmaind`) |
+| Host | `193.124.224.248` (`sharpmaind`); RU clients use extra IP `185.141.217.43` |
 | Provider | AdminVPS |
 | Panel | https://vpn2.sharpmaind.ru (Remnawave backend **3.x**) |
 | Node | `remnanode` image `remnawave/node:3.4.1`, `NET_ADMIN`, host network |
