@@ -63,18 +63,23 @@ nslookup NAME 127.0.0.1
 - `level3.blizzard.com` / `blzddist1-a.akamaihd.net` → public Akamai (direct)
 - Load low (~0.2)
 
-## Emergency VLESS bridge (2026-10-04 ~13:10 MSK)
+## FI IP blackhole from RU (2026-10-04) — Cloudflare front
 
-Home WAN IP `46.138.53.156` lost **all** reachability to FI VPS `193.124.224.248` (ping/TCP any port timeout; agent still OK). YouTube/Telegram FakeIP → VLESS broke.
+Home WAN `46.138.53.156` (MGTS) and Moscow check-host nodes cannot reach FI VPS `193.124.224.248` on **any** TCP port (22/80/443/8443). EU nodes OK. Remnawave/Caddy/Happ backend are healthy; the path is IP-blocked.
 
-Temp fix while cloud agent runs:
+**Working temporary front (quick tunnel):**
 
-1. Agent SSH `-R 127.0.0.1:10443:193.124.224.248:443` to router (tmux `vps-rforward`)
-2. `podkop.main.proxy_string` host = `127.0.0.1:10443` (SNI/Host still `vpn2.sharpmaind.ru`)
-3. Clash delay ~600–650 ms
+- VPS: `cloudflared tunnel --url http://127.0.0.1:8080` + docker `cf-front` (Caddy HTTP mux → remnawave `:3000`, WS `/vpn` → `:10443`, xHTTP `/xh` → `:10445`, gRPC → `:10444`)
+- State/helpers: `/opt/cf-front/` (`public_url.txt`, `watchdog.sh` cron `*/2`, `update-hosts-to-current-url.sh`)
+- Remnawave: all hosts `address/sni/host` = current `*.trycloudflare.com`; `SUB_PUBLIC_DOMAIN=<front>/api/sub`
+- Cudy `podkop.main.proxy_string` → same CF host:443 (WS `/vpn`); FakeIP domains still tunnel via CF (MGTS can reach CF anycast)
+- Happ: old `https://vpn2.sharpmaind.ru/api/sub/...` cannot refresh (DNS→dead IP). Users must **re-add** subscription from the trycloudflare URL (admin iTruba notified in TG)
 
-**Reverts when agent dies.** Restore direct VPS path, then set proxy host back to `vpn2.sharpmaind.ru:443`. Needs VPS SSH (`SSHPASS`) to check ban/firewall for `46.138.53.156`.
+**Verified:** Moscow check-host HTTP 200 on CF sub URL; VLESS via CF returns VPS egress IP.
 
+**Permanent fix (needed):** AdminVPS new IP **or** Cloudflare orange-cloud / named tunnel + DNS for `vpn2.sharpmaind.ru` at reg.ru (quick tunnel URL changes on cloudflared restart — watchdog rewrites hosts). Backup of pre-change hosts: `/root/backups/cf-front-20261004/`.
+
+Optional agent SSH `-R 127.0.0.1:10443:193.124.224.248:443` (tmux `vps-rforward`) remains a fallback if CF dies; not required while CF front works.
 ## IPv6
 
 For this home setup (IPv4 LAN, podkop/VLESS, Tailscale) IPv6 is unnecessary.
