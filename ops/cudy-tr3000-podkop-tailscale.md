@@ -69,8 +69,35 @@ For this home setup (IPv4 LAN, podkop/VLESS, Tailscale) IPv6 is unnecessary.
 
 Already mostly off (`sysctl` disable + `dhcpv6`/`ra` disabled). Cleaned 2026-10-04:
 - removed `network.wan6`, ULA prefix
-- `lan`/`wan` `delegate=0`
+- `lan`/`wan` `delegate=0` and `ipv6=0`
 - removed IPv6 firewall allow rules (DHCPv6/MLD/ICMPv6)
+- removed stale `wan6` from `firewall` wan zone network list
 - kept `/etc/sysctl.d/99-disable-ipv6.conf`
+
+## Deep audit 2026-10-04 (vs OpenWrt / fw4)
+
+**OK**
+
+- OpenWrt `25.12.5` mediatek/filogic, uptime ~5d, load ~0.2–0.3, RAM fine
+- `fw4` loaded (`nft table inet fw4`); procd may show firewall `stopped` / `active with no instances` — normal oneshot, not broken
+- WAN input REJECT (DHCP renew / ping / IGMP only); LAN accept; masquerade + MTU fix on wan
+- Tailscale zone + lan↔tailscale / tailscale→wan forwarding; MagicDNS `CorpDNS=false`, `RouteAll=false`, SSH on
+- dnsmasq → `127.0.0.42` (sing-box); FakeIP works; Battle.net → `198.18.*`, CDN `level3` → public
+- VLESS `main-out` delay ~120 ms via Clash API; `https://vpn2.sharpmaind.ru` from router HTTP 200 ~30 ms
+- `sing-box` UCI `enabled=0` but process running — expected (podkop starts it; do not enable both)
+- Wi‑Fi 2.4/5 up, WPA2-PSK
+
+**WARN**
+
+- Overlay **90%** used (~4 MB free). Biggest: `sing-box` ~42 MB + `tailscaled` ~25 MB on flash. Avoid more packages; watch before `opkg upgrade`
+- Intermittent historical `dial tcp 193.124.224.248:443: i/o timeout` in sing-box logs (seen around WAN flap / IPv6 cleanup). Live path OK now — do not trust BusyBox `nc` (no `-w` / `/dev/tcp`)
+- `odhcpd` still running while DHCPv6/RA disabled — harmless waste; can `disable` if desired
+- Dropbear password + root password auth on; WAN firewall blocks 22 from eth0, but prefer keys long-term
+- LuCI `uhttpd` listens `0.0.0.0:80/443` — OK behind wan REJECT + `rfc1918_filter=1`
+
+**Notes**
+
+- Router advertises Tailscale routes `192.168.2.0/24` (+ `192.168.1.254/32`); agents must keep `--accept-routes=false`
+- PodkopTable mangle/proxy chains empty in TUN mode — routing via FakeIP `198.18.0.0/15` + subnet routes on `sbtun`, not nft redirect
 
 Do not commit Tailscale auth keys or VLESS URLs.
