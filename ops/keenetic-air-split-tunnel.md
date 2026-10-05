@@ -1,5 +1,9 @@
 # Keenetic Air (`sharpmaind2412`) — split-tunnel trim
 
+**Retired 2026-10-04:** Air replaced by Cudy TR3000. AWG peer `keenetic-air-2412` (`10.8.1.7`) removed from FI `awg0` + `clientsTable`. Kuma monitor `Dacha Air AWG 10.8.1.7` disabled. Home VPN path is Cudy podkop → `vpn2` VLESS.
+
+**Still active routers:** Keenetic Viva (`sharpmaind.netcraze.pro`, AWG `10.8.1.4`); дача Skipper (`sharpmind.netcraze.pro`, native WG `wg-dacha` UDP `51821` / historically OpenVPN). Dacha server endpoint was `193.124.224.248:51821` — may need new IP `185.141.217.43` after RU blackhole.
+
 Date: 2026-09-01
 
 ## Goal
