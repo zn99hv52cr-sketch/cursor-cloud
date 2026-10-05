@@ -6,7 +6,11 @@
 
 **Cause:** apps often skip router DNS (DoH / hard-coded IPs). FQDN policy `vpn-sites` alone is not enough — need **IP statics** via `Wireguard1`, especially Cloudflare + AWS ranges used by Cursor API.
 
-**Remote note (2026-10-04):** Keenetic Cloud RCI via `sharpmaind.netcraze.pro` times out (`0x2027` / HttpClient Timeout). Apply **from the PC on Viva LAN** at `http://192.168.1.1` (fast). Login `admin`.
+**Applied 2026-10-05** via logged-in cloud session: 24 `Wireguard1` statics (CF `104.16/12`, `172.64/13`, AWS `52/11` `54.224/11` `100.16/12` `34.192/10`, AnyDesk `92.223.88/24` `195.181.160/20` `148.113/16`, …). RCI `parse` + `system configuration save` returned **200** (`DONE {ok:24, fail:0}`).
+
+SSH is not installed on Viva (only `ip telnet`). `Wireguard1` is `security-level public`, so the VPS cannot open SSH/telnet/HTTP to `10.8.1.4` or `192.168.1.1`.
+
+Red `RciQueue … TimeoutError` lines in the panel console are the cloud UI’s own background polls, after the save already succeeded. Restart Cursor and AnyDesk on the PC (VPN client off). If Cursor still says region blocked, disable IPv6 on that PC.
 
 ## One-shot (browser console on local admin)
 
