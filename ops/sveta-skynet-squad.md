@@ -8,15 +8,15 @@
 
 Сквад `Sveta-SkyNet` (`b52de567-f64e-4951-94f2-08689b9a3983`). `Sveta` снята с `Default-Squad`.
 
-Шесть хостов только этого сквада, адрес `185.141.217.43:443`, SNI `vpn2.sharpmaind.ru`, без HTTP/2:
+Шесть хостов только этого сквада, адрес `185.141.217.43:443`, SNI `vpn2.sharpmaind.ru`, без HTTP/2. Порядок с 2026-10-08, после уточнения: первым оставлен её обычный WebSocket, дальше профили под Скайнет.
 
-1. Скайнет packet-up — xHTTP, ALPN `http/1.1`, chrome
-2. Скайнет packet-up FF — то же, firefox
-3. Скайнет stream-one
-4. Скайнет stream-up
-5. Скайнет WS FF — WebSocket, `http/1.1`, firefox
-6. Скайнет WS — WebSocket, `http/1.1`, chrome
+1. Скайнет WS — WebSocket, ALPN `http/1.1`, chrome. Это тот же транспорт, что `🇫🇮 Megafon- Финляндия`, которым она пользуется постоянно.
+2. Скайнет packet-up — xHTTP, `http/1.1`, chrome
+3. Скайнет packet-up FF — то же, firefox
+4. Скайнет stream-one
+5. Скайнет stream-up
+6. Скайнет WS FF — WebSocket, `http/1.1`, firefox
 
-Остальные хосты из сквада исключены. Проверка подписки Happ: 6 профилей, первый `Скайнет packet-up`. У Default-Squad по-прежнему 15 профилей. Сервер xHTTP в режиме `auto`, `packet-up` он принимает.
+Остальные хосты из сквада исключены. Проверка подписки Happ: 6 профилей, первый `Скайнет WS`. У Default-Squad по-прежнему 15 профилей. Сервер xHTTP в режиме `auto`, `packet-up` он принимает.
 
-На iPhone обновить подписку в Happ и выбрать **Скайнет packet-up**. Если не цепляется — `packet-up FF`, затем `stream-one`.
+На iPhone обновить подписку в Happ. Дома на Скайнете, если обычный профиль не идёт, выбрать **Скайнет packet-up**. Если не цепляется — `packet-up FF`, затем `stream-one`.
