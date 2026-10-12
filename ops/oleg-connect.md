@@ -13,15 +13,14 @@
 
 Сквад `Oleg` (`99ca7b36-8de1-4006-8f52-2ebc4336e5b9`). Обе учётки сняты с `Default-Squad`. Сквад скрыт со всех общих хостов (97 связей EXCLUDE), чтобы старый список с gRPC больше не приезжал.
 
-Оператор — Мегафон. Первые два профиля названы так и сняты с общего шаблона `🇫🇮 Megafon- Финляндия`: WebSocket, TLS, ALPN только `http/1.1`, отпечаток chrome, keepalive `tcpNoDelay` / idle 30 / interval 15. Reality для Мегафона не светит имя панели: SNI `www.microsoft.com`, отпечаток `ios` (телефон iPhone, ClientHello как у Safari, не настольный Chrome).
+Оператор для профилей — Мегафон. Рабочий шаблон тот же, что у `🇫🇮 Megafon- Финляндия`: WebSocket `/vpn`, TLS, ALPN только `http/1.1`, отпечаток chrome, keepalive `tcpNoDelay` / idle 30 / interval 15.
 
-Профили сквада, по порядку:
+После обновления подписки в 10:28 UTC телефон всё ещё долбил старый gRPC `/vpngrpc/Tun` и ни разу не открыл порт `2053` и путь `/vpn`. Reality снят с подписки, чтобы первым шёл обычный WebSocket.
 
-1. 🇫🇮 Megafon Reality — TCP, Reality, Vision, порт `2053`, SNI `www.microsoft.com`, отпечаток ios. Тот же вход, что слушает для Светы; ноду не перезапускал.
-2. 🇫🇮 Megafon WS — WebSocket `/vpn`, TLS, ALPN `http/1.1`, chrome, те же TCP keepalive, что у рабочего профиля Мегафона.
-3. 🇫🇮 Олег xHTTP — `/xh/`, stream-up, ALPN `h2,http/1.1`, chrome.
-4. 🇫🇮 Олег packet-up — `/xh/`, packet-up, ALPN только `http/1.1`, chrome.
+Профили сквада сейчас:
 
-Порт `2053` слушает, чужие сессии на `443` не обрывались.
+1. 🇫🇮 Megafon — WebSocket `/vpn`, TLS, ALPN `http/1.1`, chrome.
+2. 🇫🇮 Олег xHTTP — `/xh/`, stream-up, ALPN `h2,http/1.1`, chrome.
+3. 🇫🇮 Олег packet-up — `/xh/`, packet-up, ALPN только `http/1.1`, chrome.
 
-На телефоне SecureOrbit подписку нужно обновить вручную и подключиться к **🇫🇮 Megafon Reality**. Если не встанет — **🇫🇮 Megafon WS**.
+В SecureOrbit подписку нужно удалить и добавить заново, затем включить **🇫🇮 Megafon**. Обычное обновление оставляет выбранным старый gRPC.
