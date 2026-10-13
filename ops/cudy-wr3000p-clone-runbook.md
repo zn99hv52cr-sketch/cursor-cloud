@@ -2,7 +2,7 @@
 
 Задача: прошить **новый Cudy WR3000P v1** официальным OpenWrt **25.12.5** (как у домашнего TR3000) и перенести на него **тот же split-tunnel**, что уже работает на TR3000 (`100.81.160.52`, hostname Tailscale `cudy`). Плюс Tailscale, WOL и отдельная подписка Remnawave.
 
-Не импровизируй образы и не копируй чужой VLESS. Секреты (Wi‑Fi PSK, VLESS, JWT, Tailscale auth key) **не писать в git и не печатать в отчёт**.
+Не импровизируй образы и не копируй чужой VLESS. Секреты (VLESS, JWT, Tailscale auth key) **не писать в git и не печатать в отчёт**. Пароль Wi‑Fi задан в разделе 4, в отчёт его не копировать.
 
 Эталон живой: Tailscale `100.81.160.52` / LAN `192.168.2.1`. Заметки по нему (если ветка доступна): `ops/cudy-tr3000-podkop-tailscale.md`.
 
@@ -137,8 +137,14 @@ df -h /overlay
 
 - LAN `192.168.2.1/24`, DHCP как на TR3000
 - WAN DHCP, firewall zone wan input REJECT, masquerade, MTU fix если он есть на эталоне
-- Wi‑Fi 2.4 и 5: те же SSID и PSK, что `uci show wireless` на TR3000 (WPA2-PSK). Каналы можно оставить auto, если радио wr3000p называется иначе — править только `device`, SSID/key скопировать
 - hostname роутера: `cudy-wr3000p`
+
+Wi‑Fi назвать так, оба радио WPA2-PSK (`psk2`), один пароль `742617241227`:
+
+- 2.4 ГГц: SSID `Maggot-Network`
+- 5 ГГц: SSID `Maggot-Network_5G`
+
+Имена не выдумывать и не подставлять другие SSID с TR3000, даже если `uci show wireless` там отличается. Каналы можно оставить auto. Какое `wifi-device` работает на 2.4, а какое на 5, сверить по `iwinfo` и `uci show wireless` (`band` / `hwmode`): `radio0` и `radio1` на filogic не назначать вслепую. Менять SSID, `key` и `encryption` у `wifi-iface`. Имя `device` оставить тем, которое есть на WR3000P, не копировать имя радио с TR3000.
 
 IPv6 выключить так же, как на TR3000 2026-10-04:
 
@@ -250,6 +256,8 @@ uci commit
 | OpenWrt | 25.12.5 mediatek/filogic |
 | overlay | не 100%, есть запас |
 | LAN | 192.168.2.1, TR3000 выключен |
+| Wi‑Fi 2.4 | SSID `Maggot-Network`, WPA2-PSK |
+| Wi‑Fi 5 | SSID `Maggot-Network_5G`, WPA2-PSK |
 | IPv6 | нет wan6, нет RA |
 | `vpn2` | резолвится в 185.141.217.43 либо в FakeIP, если домен в списке podkop |
 | battle.net | 198.18.x.x |
