@@ -113,3 +113,13 @@ Already mostly off (`sysctl` disable + `dhcpv6`/`ra` disabled). Cleaned 2026-10-
 - PodkopTable mangle/proxy chains empty in TUN mode — routing via FakeIP `198.18.0.0/15` + subnet routes on `sbtun`, not nft redirect
 
 Do not commit Tailscale auth keys or VLESS URLs.
+
+## Power loss 2026-10-14
+
+After electricity returned, Tailscale and the VPN looked down. The router itself had booted (uptime ~35 min when checked). `sing-box` was running and DNS already answered FakeIP (`battle.net` → `198.18.0.25`), but `198.18.0.0/15` and the subnet routes were not on `sbtun`. Those packets followed the default route to `192.168.1.254` and died. YouTube from the router did not open. Tailscale was up, but for about 15 minutes after boot it could not refresh the network map (`controlplane.tailscale.com` timeouts), so other devices did not see `cudy`.
+
+`/etc/init.d/podkop-tun` runs `/usr/bin/podkop-tun-up` at boot. That script waited only 20 seconds for `sbtun`. The same failure is in the log from 2026-10-04: `Cannot find device "sbtun"`. It then flushed the nft chains and the `ip route replace ... dev sbtun` commands failed. When `sing-box` created `sbtun` later, nothing retried the routes.
+
+Fix applied on the router: ran `podkop-tun-up` once `sbtun` existed. `198.18.0.0/15 dev sbtun` is back. `https://www.youtube.com/` and `https://telegram.org/` return HTTP 200 through the tunnel. The script now waits up to 90 seconds and exits without flushing rules if `sbtun` is still absent. Backup: `/usr/bin/podkop-tun-up.bak-20261014`.
+
+WAN on this router is `192.168.1.72` via `192.168.1.254` (the Keenetic in front). Overlay was 89% full, 4.4 MB free, mounted read-write.
