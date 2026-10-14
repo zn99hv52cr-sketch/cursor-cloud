@@ -8,7 +8,7 @@
 
 Список с телефона, плюс VK, Element, Ozon Банк, Сбер и Wildberries.
 
-- Магазины и работа: AliExpress, Avito, Dixy (`dixy.com`, `dixy.ru`, `api.dixy.ru`), Magnit, `gaskar.group`, `m.gaskar.group`, `evr.local`, `helpdesk.evr.local`.
+- Магазины и работа: AliExpress, Avito, Dixy (`dixy.com`, `dixy.ru`, `api.dixy.ru`), Magnit, `gaskar.group`, `m.gaskar.group`, `mail.gaskar.group`, `evr.local`, `helpdesk.evr.local`.
 - VK: `geosite:vk`, плюс `vk.com`, `vk.ru`, `vk.me`, `userapi.com`, `vkuseraudio.net`, `vk-cdn.net`.
 - Element: `element.io`, `app.element.io`, `matrix.org`, `vector.im`, `element.gaskar.group`.
 - Ozon и Ozon Банк: `geosite:ozon`, `finance.ozon.ru`, `bank.ozon.ru`.
@@ -26,3 +26,9 @@ Happ забирает профиль при обновлении подписк�
 v2raytun и v2rayNG этот заголовок не читают. У них остаётся тот маршрут, который задан в самом приложении.
 
 Бэкап настроек подписки до правки: `/root/backups/subscription-settings-20261008T162704Z.json`.
+
+## 2026-10-14
+
+В `DirectSites` добавлен `domain:mail.gaskar.group`, рядом с остальными адресами Gaskar. `GlobalProxy` по-прежнему `true`: напрямую уходит только этот хост и прежний список, остальные сайты остаются в туннеле.
+
+Happ подхватывает правило при обновлении подписки и перезаписывает профиль `SharpVpn`. Бэкап до этой правки: `/root/backups/subscription-settings-20261014T0828Z.json`.
