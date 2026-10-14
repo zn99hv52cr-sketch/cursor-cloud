@@ -120,6 +120,10 @@ After electricity returned, Tailscale and the VPN looked down. The router itself
 
 `/etc/init.d/podkop-tun` runs `/usr/bin/podkop-tun-up` at boot. That script waited only 20 seconds for `sbtun`. The same failure is in the log from 2026-10-04: `Cannot find device "sbtun"`. It then flushed the nft chains and the `ip route replace ... dev sbtun` commands failed. When `sing-box` created `sbtun` later, nothing retried the routes.
 
-Fix applied on the router: ran `podkop-tun-up` once `sbtun` existed. `198.18.0.0/15 dev sbtun` is back. `https://www.youtube.com/` and `https://telegram.org/` return HTTP 200 through the tunnel. The script now waits up to 90 seconds and exits without flushing rules if `sbtun` is still absent. Backup: `/usr/bin/podkop-tun-up.bak-20261014`.
+Fix applied on the router: ran `podkop-tun-up` once `sbtun` existed. `198.18.0.0/15 dev sbtun` is back. `https://www.youtube.com/` and `https://telegram.org/` return HTTP 200 through the tunnel. `podkop-tun-up` now waits up to 90 seconds and exits without flushing rules if `sbtun` is still absent. Backup: `/usr/bin/podkop-tun-up.bak-20261014`.
+
+A longer wait is not enough: the route is not stored anywhere, and the kernel deletes it whenever `sing-box` recreates `sbtun`. `/etc/init.d/podkop-tun` is now a procd service running `/usr/bin/podkop-tun-watch`. Every 20 seconds, if `sbtun` exists and `198.18.0.0/15 dev sbtun` does not, it runs `podkop-tun-up`. Checked by deleting that route: it was back in 11 seconds and YouTube returned HTTP 200. Old init backup: `/etc/init.d/podkop-tun.bak-20261014`.
+
+Tailscale is `S80`, NTP is `S98`. After power loss the clock is wrong, so the first control-plane TLS handshake fails and the node stays invisible until Tailscale retries. `/etc/hotplug.d/ntp/40-tailscale` restarts `tailscaled` once per boot, on the first NTP `stratum` event. `/tmp/tailscale-after-ntp` was created on this boot so the running session was not bounced.
 
 WAN on this router is `192.168.1.72` via `192.168.1.254` (the Keenetic in front). Overlay was 89% full, 4.4 MB free, mounted read-write.
