@@ -18,8 +18,10 @@ Oct 15 netplan left only `.43/24` as default source (gateway `185.141.217.1` is 
 ## Applied
 
 - `/etc/netplan/60-extra-ip.yaml`: both `185.141.217.43/24` and `193.124.224.248/32`, default still via `185.141.217.1`. Backup `/root/backups/netplan-20261016-youtube-ee/`.
-- `egress-src-248.service`: after `network-online`, `ip route replace default via 185.141.217.1 dev eth0 src 193.124.224.248` (netplan would otherwise pick `.43` as src because it sits on the gateway subnet).
+- `egress-src-248.service` + `/usr/local/sbin/egress-src-248.sh`: after `network-online`, set default src `.248`, and SNAT docker/AWG ranges (`172.17/16`, `172.18/16`, `172.20/16`, `172.29.172/24`, `10.0.0/24`, `10.8.1/24`) to `.248`. Do **not** SNAT all of `eth0` — that would break replies to inbound `.43`.
 - Did **not** restart remnanode / Caddy / the VPS. Listeners stay on `*:443`.
+
+VLESS (`remnanode` host network) already used the kernel default src. AmneziaWG sits in docker and was still MASQUERADE to `.43` until the SNAT rules; `docker exec amnezia-awg2 curl ifconfig.me` now returns `.248`.
 
 ## Check
 
@@ -30,4 +32,6 @@ curl -4 -sS https://ifconfig.me/ip   # 193.124.224.248
 curl -sk --resolve vpn2.sharpmaind.ru:443:185.141.217.43 https://vpn2.sharpmaind.ru/  # inbound .43 still up
 ```
 
-Verified 2026-10-16: VPS egress `.248`, YouTube `GL=RU`; through WR3000P VLESS YouTube `GL=RU` HTTP 200; Instagram/Telegram 200; `api2.cursor.sh` 200; `vpn2` on `.43` HTTP 401 (Caddy up). Clients should refresh YouTube (or clear cookies) if the EE badge is cached.
+Verified 2026-10-16: host and AWG-netns egress `.248`, YouTube `GL=RU`; through WR3000P VLESS YouTube `GL=RU` HTTP 200; Instagram/Telegram 200; `vpn2` on `.43` HTTP 401. Clients should refresh YouTube (or clear cookies) if the EE badge is cached.
+
+This is YouTube’s RU geo of `.248`, not an adblocker. If Google retags the IP, ads can return. NL node (`147.45.111.81`) is a different exit and is unchanged.
