@@ -11,7 +11,7 @@
 - Хосты **Билайн packet-up / packet-up FF / stream-one / stream-up / WS** (сквад `Emil-Beeline`, режим `ALLOW_ONLY`) стояли **`isDisabled=true`**.
 - `Emil_1`…`Emil_5` (только `Emil-Beeline`) видели **один** профиль: `Билайн` WS firefox.
 - `Emil_6` сидит в **`Emil-Beeline` + `Default-Squad`** (Happ Portable). Default не снимали. Из‑за Default первым шёл `🇫🇮 Megafon- Финляндия` WS.
-- `Julia_Samoilova_4/5/6` — сквад `South-RU-Beeline`. Первым тоже был Мегафон WS, dedicated packet-up им не отдавался.
+- `Julia_Samoilova_4/5/6` — сквад **`South-RU-Beeline` = Ставрополье**. Его оставляем. Первым шёл Мегафон WS, ставропольские Билайн-хосты были ниже (pos 13–15).
 - Старые `Julia_Samoilova`, `_2`, `_3` — MTS-сквады, не трогали.
 
 Inbound `vless-xhttp` на ноде по-прежнему `mode=auto` (принимает packet-up / stream-up / stream-one).
@@ -20,9 +20,9 @@ Inbound `vless-xhttp` на ноде по-прежнему `mode=auto` (прин�
 
 Бэкап: `/root/backups/hosts-20261016T203804Z/hosts.json`.
 
-1. Включены шесть dedicated-хостов Билайн, в `ALLOW_ONLY` добавлен сквад `South-RU-Beeline` (Юля) рядом с `Emil-Beeline`. Порядок: packet-up → packet-up FF → stream-one → stream-up → WS → Билайн (firefox).
-2. `viewPosition` packet-up = **0**, Мегафон остаётся **1**. Default-пользователи dedicated-хосты не видят, у них по-прежнему первым Мегафон (проверка: `Cudy_WR3000P`, `Podruga_Juli`).
-3. `🇫🇮 Megafon- Финляндия` исключён из `South-RU-Beeline`, чтобы Юля не выбирала его по привычке. У `Emil_6` Мегафон **остался** во втором слоте — Default не трогали.
+1. Включены шесть dedicated-хостов Билайн **только для `Emil-Beeline`**. Первая попытка повесить их ещё и на `South-RU-Beeline` отменена: South — это Ставрополье, его каталог не смешиваем с эмилевским.
+2. `viewPosition` Emil packet-up = **0**, Мегафон остаётся **1**. Default-пользователи dedicated-хосты не видят, у них по-прежнему первым Мегафон (проверка: `Cudy_WR3000P`).
+3. Юля **осталась** в `South-RU-Beeline`. Мегафон в этот сквад вернули. Первыми стоят ставропольские Билайн: xHTTP (packet-up, ALPN `http/1.1`) → WS (`http/1.1`) → gRPC. Мегафон в её подписке 4-м, не удалён.
 
 После обновления подписки (Happ / v2raytun):
 
@@ -30,9 +30,9 @@ Inbound `vless-xhttp` на ноде по-прежнему `mode=auto` (прин�
 |-----|--------|----------------|--------------------|
 | `Emil_1`…`Emil_5` | только Emil-Beeline | Билайн packet-up (xHTTP `/xh/` http/1.1) | нет |
 | `Emil_6` | Emil-Beeline **и Default** | Билайн packet-up | да, 2-м; дальше Yota/MTS/Tele2/RT |
-| `Julia_Samoilova_4/5/6` | South-RU-Beeline | Билайн packet-up | нет |
+| `Julia_Samoilova_4/5/6` | South-RU-Beeline (Ставрополье) | 🏔 Ставрополь Билайн-xHTTP | да, 4-м |
 
-На телефонах: обновить подписку и выбрать **Билайн packet-up**. Если не цепляется — packet-up FF, потом stream-one. Мегафон на Билайне не брать.
+На телефонах Эмиля: обновить подписку и выбрать **Билайн packet-up**. Юле — **🏔 Ставрополь Билайн-xHTTP**, запасной WS. Мегафон на Билайне не брать.
 
 ## VPS / панели (live 2026-10-16 ~20:40 UTC)
 
@@ -60,4 +60,5 @@ Inbound `vless-xhttp` на ноде по-прежнему `mode=auto` (прин�
 - Диск 58% / 12G free — не горит, но бэкапы в `/root/backups` лучше не копить бесконечно.
 - Load ~2 на 2 ядрах: лишний restart ноды в час пик не делать (Света Reality и остальные на этом же Xray).
 - `Emil_6` Default **не снимать** — Happ Portable собран на этой подписке.
+- `South-RU-Beeline` **не разбирать** и не кормить эмилевскими dedicated-хостами — это Ставрополье.
 - Юля 1–3 на MTS — не менял.
