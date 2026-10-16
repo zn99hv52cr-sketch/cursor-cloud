@@ -21,7 +21,7 @@ Inbound `vless-xhttp` на ноде по-прежнему `mode=auto` (прин�
 Бэкап: `/root/backups/hosts-20261016T203804Z/hosts.json`.
 
 1. Включены шесть dedicated-хостов Билайн **только для `Emil-Beeline`**. Первая попытка повесить их ещё и на `South-RU-Beeline` отменена: South — это Ставрополье, его каталог не смешиваем с эмилевским.
-2. `viewPosition` Emil packet-up = **0**, Мегафон остаётся **1**. Default-пользователи dedicated-хосты не видят, у них по-прежнему первым Мегафон (проверка: `Cudy_WR3000P`, `Emil_6`).
+2. `viewPosition` Emil packet-up = **0**, Мегафон остаётся **1**. Default / `happ` dedicated-хосты Эмиля не видят, у них первым Мегафон (проверка: `Cudy_WR3000P`, `Emil_6`).
 2b. Для Happ Portable заведён сквад **`happ`** (`7c685797-a739-4383-995e-484d5f55e361`), те же инбаунды что у Default. `Emil_6` только в `happ` (не Default, не Emil-Beeline). Каталог как у Default: Мегафон первым, 15 профилей. Хосты, скрытые от Default, скрыты и от `happ`.
 3. Юля **осталась** в `South-RU-Beeline`. Мегафон в этот сквад вернули. Первыми стоят ставропольские Билайн: xHTTP (packet-up, ALPN `http/1.1`) → WS (`http/1.1`) → gRPC. Мегафон в её подписке 4-м, не удалён.
 
