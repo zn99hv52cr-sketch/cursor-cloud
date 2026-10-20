@@ -38,6 +38,10 @@ uci commit podkop
 /etc/init.d/sing-box restart
 ```
 
+## Статус
+
+Применено на TR3000 **2026-10-20**: все домены в UCI, podkop перезапущен, sing-box работает, DNS FakeIP `198.18.x.x` для `chatgpt.com` / `openai.com` / `api.openai.com`.
+
 ## Проверка
 
 На роутере:
