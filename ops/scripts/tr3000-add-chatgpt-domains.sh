@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run on Cudy TR3000 (OpenWrt + podkop). Adds ChatGPT/OpenAI to split-tunnel list.
+# Run on Cudy TR3000 / WR3000P (OpenWrt + podkop). Adds ChatGPT/OpenAI to split-tunnel list.
 set -e
 
 DOMAINS="

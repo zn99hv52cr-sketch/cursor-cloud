@@ -1,4 +1,4 @@
-# ChatGPT через туннель на Cudy TR3000
+# ChatGPT через туннель (TR3000 + WR3000P)
 
 ## Домены
 
@@ -21,10 +21,13 @@
 
 ## Применение
 
-С ноутбука (Tailscale SSH уже одобрен на вашем аккаунте):
+С ноутбука (Tailscale SSH):
 
 ```bash
+# TR3000
 tailscale ssh root@100.81.160.52 'sh -s' < ops/scripts/tr3000-add-chatgpt-domains.sh
+# WR3000P
+tailscale ssh root@100.104.207.62 'sh -s' < ops/scripts/tr3000-add-chatgpt-domains.sh
 ```
 
 Или на роутере вручную — скрипт: `ops/scripts/tr3000-add-chatgpt-domains.sh`.
@@ -40,7 +43,12 @@ uci commit podkop
 
 ## Статус
 
-Применено на TR3000 **2026-10-20**: все домены в UCI, podkop перезапущен, sing-box работает, DNS FakeIP `198.18.x.x` для `chatgpt.com` / `openai.com` / `api.openai.com`.
+| Роутер | Tailscale | FakeIP | Применено |
+|--------|-----------|--------|-----------|
+| **TR3000** | `100.81.160.52` | `198.18.x.x` | 2026-10-20 |
+| **WR3000P** | `100.104.207.62` | `198.20.x.x` | 2026-10-20 |
+
+На обоих: 10 доменов в `user_domains`, podkop + sing-box перезапущены. Пример DNS: TR3000 `chatgpt.com` → `198.18.1.128`; WR3000P → `198.20.1.43`.
 
 ## Проверка
 
