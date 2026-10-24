@@ -8,6 +8,7 @@ DOMAINS="
 rovio.com
 cloud.rovio.com
 cdn.rovio.com
+assets-cloud.rovio.com
 rovio-cdn.net
 rovio-static.com
 helpshift.com
@@ -16,12 +17,19 @@ unity.com
 googleapis.com
 gstatic.com
 fundingchoicesmessages.google.com
+firebaselogging.googleapis.com
+firebaselogging-pa.googleapis.com
+gmscompliance-pa.googleapis.com
 applovin.com
 applvn.com
 vungle.com
 mintegral.net
 rayjump.com
 "
+
+# QUIC (UDP/443) often hangs Angry Birds through VLESS/WS — force TCP.
+uci set podkop.settings.disable_quic='1'
+uci set podkop.main.enable_udp_over_tcp='1'
 
 for d in $DOMAINS; do
 	uci get podkop.main.user_domains 2>/dev/null | tr ' ' '\n' | grep -qx "$d" && continue
