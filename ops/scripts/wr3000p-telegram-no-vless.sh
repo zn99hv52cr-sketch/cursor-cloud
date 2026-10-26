@@ -4,7 +4,10 @@
 # Run: tailscale ssh root@100.104.207.62 'sh -s' < ops/scripts/wr3000p-telegram-no-vless.sh
 set -e
 
-while uci del_list podkop.main.community_lists='telegram' 2>/dev/null; do :; done
+uci del_list podkop.main.community_lists='telegram' 2>/dev/null || true
+for d in telegram.org telegram.me td.telegram.org telegram.dog core.telegram.org t.me telesco.pe; do
+	uci del_list podkop.main.user_domains="$d" 2>/dev/null || true
+done
 
 uci commit podkop
 /etc/init.d/podkop restart
