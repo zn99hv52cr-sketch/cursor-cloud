@@ -31,7 +31,15 @@ snapshot() {
 		log_line "STATE=offline"
 		return 0
 	fi
-	log_line "$IF $(iw dev "$IF" station dump 2>/dev/null | grep -iA12 "$MAC" | tr '\n' ' | ')"
+	dump=$(iw dev "$IF" station dump 2>/dev/null | grep -iA20 "$MAC")
+	sig=$(echo "$dump" | awk '/signal:/ {print $2; exit}')
+	txp=$(echo "$dump" | awk '/tx packets:/ {print $3; exit}')
+	txf=$(echo "$dump" | awk '/tx failed:/ {print $3; exit}')
+	txr=$(echo "$dump" | awk '/tx retries:/ {print $3; exit}')
+	preamble=$(echo "$dump" | awk '/preamble:/ {print $2; exit}')
+	fail_pct=""
+	[ -n "$txp" ] && [ "$txp" -gt 0 ] && [ -n "$txf" ] && fail_pct=$(awk "BEGIN {printf \"%.2f\", ($txf/$txp)*100}")
+	log_line "STATE=online if=$IF signal=${sig}dBm preamble=$preamble tx_packets=$txp tx_failed=$txf tx_retries=$txr fail_pct=${fail_pct}%"
 }
 
 case "$1" in
