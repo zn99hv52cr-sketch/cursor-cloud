@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+START=95
+STOP=10
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance snap
+	procd_set_param command /usr/bin/log-iphone-air.sh snapshot-loop
+	procd_set_param respawn
+	procd_close_instance
+
+	procd_open_instance follow
+	procd_set_param command /usr/bin/log-iphone-air.sh follow
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+	killall log-iphone-air.sh 2>/dev/null
+}
