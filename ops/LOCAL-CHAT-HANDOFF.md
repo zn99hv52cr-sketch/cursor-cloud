@@ -48,7 +48,7 @@ Repo workspace is ops-only: notes + `ops/vpn-bot/` mirror. **Secrets stay on VPS
 
 - Xray outbound: `TORRENT_CUT` = `blackhole`
 - Routing rule: `protocol: ["bittorrent"]` → `outboundTag: TORRENT_CUT`, `ruleTag: TORRENT_CUT`
-- Sniffing on inbounds: `http`, `tls`, `quic` (needed to classify bittorrent)
+- Sniffing on inbounds: `tls` and `quic` only, `routeOnly: false`. Bittorrent is classified by the separate bittorrent sniffer (it does not need `http`). Do **not** add `http` back and do **not** set `routeOnly: true`: `http` sniffing rewrites Telegram (ports 443/80/5222) to `www.google.com`, and `routeOnly: true` then dials the client's original IP, which on Beeline is often poisoned so Instagram and the rest never load. Fixed 2026-10-30 13:50 MSK on profile `vless-main`.
 - Remnawave plugin `torrentBlocker.enabled` = **false**
 
 `/torrent` in the bot:
