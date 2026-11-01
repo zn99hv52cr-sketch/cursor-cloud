@@ -41,8 +41,10 @@ uci commit podkop
 На роутере:
 
 ```bash
-nslookup claude.ai 127.0.0.1
-nslookup assets-proxy.anthropic.com 127.0.0.1
+nslookup claude.ai 127.0.0.42
+nslookup assets-proxy.anthropic.com 127.0.0.42
+# или с LAN-адреса роутера:
+nslookup claude.ai 192.168.2.1
 ```
 
 Ответ **`198.18.x.x`** (FakeIP TR3000) — DNS отдаёт туннель.

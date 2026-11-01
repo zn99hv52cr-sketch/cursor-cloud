@@ -27,9 +27,10 @@ if logread 2>/dev/null | tail -30 | grep -qi 'configuration is unchanged'; then
 fi
 
 echo "=== DNS check (198.18.x.x = tunnel on TR3000) ==="
+DNS_SERVER="127.0.0.42"
 for d in claude.ai api.anthropic.com assets-proxy.anthropic.com; do
 	echo "-- $d"
-	nslookup "$d" 127.0.0.1 2>/dev/null | awk '/^Address: / && $2 !~ /127\\./ {print; exit}'
+	nslookup "$d" "$DNS_SERVER" 2>/dev/null | awk '/^Address: / && $2 !~ /127\\./ {print; exit}'
 done
 
 echo "=== list (claude/anthropic) ==="
