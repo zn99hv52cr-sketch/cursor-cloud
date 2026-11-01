@@ -2,6 +2,7 @@
 # Cloud Agent: join tailnet on boot and stay ready for `tailscale ssh` to Cudy routers.
 set -euo pipefail
 
+mkdir -p /tmp/cursor
 TS_STATE_DIR="${TAILSCALE_STATE_DIR:-/var/lib/tailscale}"
 TS_SOCKET="${TAILSCALE_SOCKET:-/var/run/tailscale/tailscaled.sock}"
 TS_HOSTNAME="${TAILSCALE_HOSTNAME:-cursor-cloud}"
