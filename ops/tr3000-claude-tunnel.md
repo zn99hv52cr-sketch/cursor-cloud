@@ -1,4 +1,4 @@
-# Claude (claude.ai) через туннель — TR3000
+# Claude (claude.ai) через туннель — TR3000 / WR3000P
 
 ## Домены
 
@@ -17,12 +17,15 @@
 
 Не трогать остальной `user_domains` (telegram, rezka, cursor, chatgpt и т.д.).
 
-## Применение на TR3000
+## Применение
 
-С ПК в Tailscale:
+С ПК в Tailscale (один и тот же скрипт):
 
 ```bash
+# TR3000 (дом)
 tailscale ssh root@100.81.160.52 'sh -s' < ops/scripts/tr3000-add-claude-domains.sh
+# WR3000P (вторая квартира)
+tailscale ssh root@100.104.207.62 'sh -s' < ops/scripts/tr3000-add-claude-domains.sh
 ```
 
 Или скопировать скрипт на роутер: `ops/scripts/tr3000-add-claude-domains.sh`.
@@ -47,9 +50,16 @@ nslookup assets-proxy.anthropic.com 127.0.0.42
 nslookup claude.ai 192.168.2.1
 ```
 
-Ответ **`198.18.x.x`** (FakeIP TR3000) — DNS отдаёт туннель.
+Ответ **`198.18.x.x`** (FakeIP podkop) — DNS отдаёт туннель.
 
-С LAN: открыть https://claude.ai — в Remnawave у **Cuddy_TR3000** должен обновиться `onlineAt`.
+С LAN: открыть https://claude.ai — в Remnawave должен обновиться `onlineAt` у **Cuddy_TR3000** или **WR3000P**.
+
+## Статус
+
+| Роутер | Tailscale | Применено |
+|--------|-----------|-----------|
+| **TR3000** | `100.81.160.52` | 2026-11-01 |
+| **WR3000P** | `100.104.207.62` | 2026-11-01 |
 
 ## Доступ агента
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run on Cudy TR3000 (OpenWrt + podkop). Adds Claude / Anthropic to split-tunnel list.
+# Run on Cudy TR3000 / WR3000P (OpenWrt + podkop). Adds Claude / Anthropic to split-tunnel list.
 set -e
 
 DOMAINS="
@@ -26,7 +26,7 @@ if logread 2>/dev/null | tail -30 | grep -qi 'configuration is unchanged'; then
 	/etc/init.d/sing-box restart
 fi
 
-echo "=== DNS check (198.18.x.x = tunnel on TR3000) ==="
+echo "=== DNS check (198.18.x.x = tunnel) ==="
 DNS_SERVER="127.0.0.42"
 for d in claude.ai api.anthropic.com assets-proxy.anthropic.com; do
 	echo "-- $d"
