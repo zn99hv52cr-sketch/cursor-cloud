@@ -18,27 +18,26 @@
 
 Скопировать ключ в **Cursor → Cloud Agents → Environments → cursor-cloud → Secrets** как **`TAILSCALE_AUTHKEY`**.
 
-## 2. ACL: тег и SSH без check
+## 2. ACL и теги на роутерах (IP/имя в SSH **не работают**)
 
-[Access controls](https://login.tailscale.com/admin/acls) → JSON. Добавить (или слить с вашим файлом):
+В Tailscale SSH в **Destination** можно только **тег**, не `cudy-tr3000` и не `100.81.x.x`.
 
-```json
-"tagOwners": {
-  "tag:cursor-cloud": ["autogroup:admin"]
-},
-"ssh": [
-  {
-    "action": "accept",
-    "src": ["tag:cursor-cloud"],
-    "dst": ["100.81.160.52", "100.104.207.62"],
-    "users": ["root"]
-  }
-]
-```
+### Вариант A — агент сам (рекомендуется)
 
-Правило **`accept` для `tag:cursor-cloud` должно быть выше** любого общего `"action": "check"` для `autogroup:member`, иначе снова будет ссылка на TR3000.
+1. [API access token](https://login.tailscale.com/admin/settings/keys) → секрет **`TAILSCALE_API_KEY`** в Environment.
+2. Новый агент запускает:
+   ```bash
+   bash ops/scripts/tailscale-apply-cursor-cloud-acl.sh
+   ```
+   Скрипт: тег **`tag:cudy`** на TR3000/WR3000P + SSH `accept` **`tag:cursor-cloud` → `tag:cudy`**, user `root`.
 
-Сохранить ACL. Новые агенты с ключом получат тег `cursor-cloud` автоматически.
+### Вариант B — вручную в UI
+
+1. **Definitions → Tags:** `cudy` (owner admin), `cursor-cloud` (owner admin).
+2. **Machines →** cudy-tr3000 и cudy-wr3000p → **Edit tags** → **`tag:cudy`**.
+3. **Policies → Tailscale SSH → Add rule:** Source `tag:cursor-cloud`, Destination **`tag:cudy`**, user `root`, Check **Off**.
+
+Auth key агента — с **Tags → `tag:cursor-cloud`**.
 
 ## 3. Окружение Cursor
 
