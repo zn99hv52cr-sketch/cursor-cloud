@@ -30,9 +30,20 @@ if [ -z "${TAILSCALE_AUTHKEY:-}" ]; then
 	exit 0
 fi
 
+# Dashboard paste often adds a trailing newline; API keys are not auth keys.
+TS_AUTHKEY="$(printf '%s' "$TAILSCALE_AUTHKEY" | tr -d '\n\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+if [ -z "$TS_AUTHKEY" ]; then
+	echo "start-tailscale: TAILSCALE_AUTHKEY empty after trim; skipping tailscale up" >>/tmp/cursor/start-tailscale.log
+	exit 0
+fi
+if [[ "$TS_AUTHKEY" == tskey-api-* ]]; then
+	echo "start-tailscale: secret is API key (tskey-api-...); need Auth key (tskey-auth-...) from Settings → Keys" >>/tmp/cursor/start-tailscale.log
+	exit 0
+fi
+
 # Re-auth with key so every fresh VM joins without a browser link.
 sudo tailscale --socket="$TS_SOCKET" up \
-	--auth-key="$TAILSCALE_AUTHKEY" \
+	--auth-key="$TS_AUTHKEY" \
 	--hostname="$TS_HOSTNAME" \
 	--accept-routes \
 	--ssh \
