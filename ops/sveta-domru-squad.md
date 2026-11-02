@@ -19,3 +19,5 @@
 Туннель: `cf-front-tunnel.service`. URL для Светы обновляет `sveta-cf-front.timer`.
 
 На iPhone потянуть подписку. Первая строка должна стать **Дом.ru CF**.
+
+Happ routing: Telegram (`t.me`, `telegram.org`, DC-сети) принудительно в прокси, DNS DoH `1.1.1.1`, только IPv4. Дом.ru свой DNS для Telegram травит.
