@@ -15,16 +15,16 @@
 
 Дом.ru с домашнего Wi‑Fi (`Happ/4.7.2` iOS) порт **2053 не пускает**: после Reality первым в списке до ноды не было ни одного `vless-reality`. До этого с той же сети стабильно жил `vless-main` на 443.
 
-1. **Дом.ru WS** — WebSocket 443, safari. Автоподключение Happ.
-2. **Дом.ru packet-up** — xHTTP, ALPN `http/1.1`, safari
-3. **Дом.ru packet-up iOS**
-4. **Дом.ru WS FF** — WebSocket, firefox
-5. **Дом.ru Safari** / **Дом.ru iOS** — xHTTP stream
-6. **Дом.ru Reality** — `:2053`, SNI Microsoft. С Дом.ru Wi‑Fi не доходит.
-7. **Megafon- Финляндия** — последняя, для мобильного Мегафона.
+1. **Дом.ru WS** — WebSocket 443, safari. Автоподключение Happ, домашний Wi‑Fi.
+2. **Megafon- Финляндия** — вторая, для мобильной связи.
+3. **Дом.ru packet-up** — xHTTP, ALPN `http/1.1`, safari
+4. **Дом.ru packet-up iOS**
+5. **Дом.ru WS FF** — WebSocket, firefox
+6. **Дом.ru Safari** / **Дом.ru iOS** — xHTTP stream
+7. **Дом.ru Reality** — `:2053`, SNI Microsoft. С Дом.ru Wi‑Fi не доходит.
 
 2026-11-02 10:21 MSK: с домашнего Wi‑Fi Дом.ru первая строка **Дом.ru WS** заработала.
 
-На iPhone в Happ обновить подписку. Дома оставить **Дом.ru WS**. На сотовой — последняя, **Megafon**.
+На iPhone в Happ обновить подписку. Дома первая **Дом.ru WS**, на сотовой вторая **Megafon**.
 
 Чужие сквады не задеты: в Default-Squad профилей Дом.ru нет.
