@@ -11,17 +11,16 @@
 
 Хосты только этого сквада (`ALLOW_ONLY`), адрес панели не трогал. Happ берёт **первую** строку для автоподключения.
 
-## Порядок в подписке (2026-11-02)
+## Порядок в подписке (2026-11-02, после Wi‑Fi)
 
-1. **Дом.ru Reality** — `185.141.217.43:2053`, SNI `www.microsoft.com`. Для домашнего Wi‑Fi Дом.ru это основной профиль: DPI режет обычный TLS на 443 с именем панели.
+Дом.ru с домашнего Wi‑Fi (`Happ/4.7.2` iOS) порт **2053 не пускает**: после Reality первым в списке до ноды не было ни одного `vless-reality`. До этого с той же сети стабильно жил `vless-main` на 443.
+
+1. **Дом.ru WS** — WebSocket 443, safari. Автоподключение Happ.
 2. **Дом.ru packet-up** — xHTTP, ALPN `http/1.1`, safari
-3. **Дом.ru packet-up iOS** — то же, отпечаток ios
-4. **Дом.ru Safari** — xHTTP stream-one
-5. **Дом.ru iOS** — xHTTP stream-up
-6. **Дом.ru WS** — WebSocket, safari
-7. **Дом.ru WS FF** — WebSocket, firefox (как у Ростелекома/кабеля)
-8. **Megafon- Финляндия** — запас для мобильного Мегафона
-
-На iPhone в Happ обновить подписку. Дома оставить первую строку **Дом.ru Reality**. Если 2053 режется — вторая, `packet-up`. На сотовом Мегафоне можно последнюю строку.
+3. **Дом.ru packet-up iOS**
+4. **Дом.ru WS FF** — WebSocket, firefox
+5. **Дом.ru Safari** / **Дом.ru iOS** — xHTTP stream
+6. **Megafon- Финляндия** — мобильный Мегафон
+7. **Дом.ru Reality** — `:2053`, SNI Microsoft. Оставлен в конце: с Дом.ru Wi‑Fi не доходит.
 
 Чужие сквады не задеты: в Default-Squad профилей Дом.ru нет.
