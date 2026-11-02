@@ -1,25 +1,18 @@
 # Sveta, Дом.ru, центр Петербурга
 
-Пользователь `Sveta` (id 5, short uuid `RnqwjtrNjArut7LD`). Домашний провайдер **Дом.ru**. Клиент: Happ на iPhone.
+Пользователь `Sveta` (id 5, short uuid `RnqwjtrNjArut7LD`). Happ на iPhone, домашний **Дом.ru**.
 
-| | |
-|---|---|
-| Сквад | `Sveta-DomRu` (`b52de567-f64e-4951-94f2-08689b9a3983`) |
-| Подписка | `https://vpn2.sharpmaind.ru/api/sub/RnqwjtrNjArut7LD` |
+## Важно
 
-## Что выяснилось
+Попытка повесить Reality на публичный `185.141.217.43:443` (Caddy на localhost) **оборвала** рабочие сессии: после 07:23 UTC до ноды от Светы больше ничего не доходило. Откатили: Caddy снова на `*:443`, Reality на `:2053`.
 
-- 2053 и `193.124.224.248` с её Wi‑Fi не доходят.
-- WS на `185.141.217.43:443` цепляется и через несколько минут DPI рвёт.
-- Reality с SNI `www.microsoft.com` на этот IP ни разу не принялся (Happ остаётся на первой строке).
-- Caddy на `127.0.0.1:443`, публичный `.43:443` — Reality с fallback на сайт.
+Единственный профиль, который с Дом.ru реально жил — **WS на 443**, но DPI рвал его через несколько минут. Reality (2053 / `.248` / microsoft SNI) ни разу не принялся.
 
 ## Порядок сейчас
 
-1. **Дом.ru packet-up** — xHTTP `http/1.1` safari, `/xh/`. Автоподключение.
-2. **Megafon- Финляндия** — мобильная связь.
-3. **Дом.ru packet-up iOS**
-4. **Дом.ru Reality** — тот же `.43:443`, SNI уже `vpn2.sharpmaind.ru` (не Microsoft).
-5. WS FF / Safari / iOS / WS — запас.
+1. **Дом.ru packet-up** — xHTTP `http/1.1` safari `/xh/` (через Caddy, как раньше).
+2. **Megafon- Финляндия** — WS chrome, мобильная связь; с Wi‑Fi тоже цеплялся.
+3. packet-up iOS / WS FF / Safari / iOS / WS
+4. Reality 2053 — в конце, с этой сети не доходит.
 
-На iPhone потянуть подписку. Дома первая **Дом.ru packet-up**.
+На iPhone потянуть подписку. Дома первая **Дом.ru packet-up**. Если не вцепится — вторая **Megafon**.
