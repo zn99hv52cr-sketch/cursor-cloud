@@ -1,25 +1,23 @@
-# Sveta, Дом.ru — копаем Megafon (только сквад Sveta-DomRu)
+# Sveta, Дом.ru — Megafon Reality (только сквад Sveta-DomRu)
 
-На Wi‑Fi Дом.ru Megafon WS цепляется, потом DPI рвёт долгую сессию. Правки **только** в ALLOW_ONLY хостах сквада `b52de567-…` (Sveta-DomRu). Общий Megafon / Caddy / чужие юзеры не трогаем.
+Дом.ru DPI рвёт долгий WS на `vpn2` (`.43:443`). xHTTP у неё в логах не поднимался — только `vless-main`.
 
-## Порядок в подписке (после обновления)
+## Рабочий путь
 
-1. **Megafon- packet-up** — xHTTP `/xh/`, mode packet-up, padding, fp safari  
-2. **Megafon- stream-up** — xHTTP stream-up  
-3. **Megafon- packet-up iOS** — то же + fp ios  
-4. **Megafon- stream** — stream-one  
-5. **Megafon- Финляндия** — WS `/vpn` safari (мягкий keepalive 300/120, без TFO)  
-6. **Megafon- FF** / **Megafon- iOS** — WS запас  
-7. Дом.ru fallbacks
+1. **Megafon- Reality** / **Reality Chrome** — `193.124.224.248:443`, VLESS+Reality, SNI `www.microsoft.com`  
+   (на сервере: xray `:9443` + DNAT `.248:443→9443`; Caddy только на `185.141.217.43`)
+2. Megafon packet-up / stream-up / packet-up iOS / stream — запас по `vpn2`
+3. Reality 2083 / 2096 — запас
+4. Megafon WS — цепляется, но DPI рвёт
 
-Все Megafon-* с тегами `MEGAFON,SVETA` → `internalSquads: ALLOW_ONLY [Sveta-DomRu]`.
+Все эти хосты: `ALLOW_ONLY` → `Sveta-DomRu` (`b52de567-…`). Чужим не светятся.
 
-## Что сделать на iPhone
+## Инфра (прозрачно для остальных)
 
-Потянуть подписку в Happ. Автоподключение должно взять **packet-up**. Если отвалится — руками **stream-up** или **packet-up iOS**. WS (#5) оставить на проверку «цепается / рвёт».
+- Caddy `bind 185.141.217.43` (DNS `vpn2` → `.43`)
+- systemd `sveta-reality-248-nat.service` → `/opt/remnawave/sveta-reality-248.nat.sh`
+- inbound `vless-reality-248` в профиле + activeInbounds ноды + сквад Светы
 
-## Не менять глобально
+## iPhone
 
-- Caddy `/vpn` (уже flush; не трогать дальше без нужды)  
-- Shared `🇫🇮 Megafon- Финляндия` (`a03f6bc3…`, fp chrome) для Default-Squad  
-- Reality / CF — скрыты у неё, не возвращать без запроса  
+Птянуть подписку в Happ → должен взять **Megafon- Reality**. Не сидеть на WS.
