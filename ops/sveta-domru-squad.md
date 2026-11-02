@@ -10,9 +10,9 @@
 
 ## Порядок сейчас
 
-1. **Дом.ru packet-up** — xHTTP `http/1.1` safari `/xh/` (через Caddy, как раньше).
-2. **Megafon- Финляндия** — WS chrome, мобильная связь; с Wi‑Fi тоже цеплялся.
-3. packet-up iOS / WS FF / Safari / iOS / WS
-4. Reality 2053 — в конце, с этой сети не доходит.
+1. **Дом.ru WS** — WebSocket 443 safari. Тот, что утром с Wi‑Fi цеплялся.
+2. **Megafon- Финляндия** — мобильная связь.
+3. packet-up / packet-up iOS / WS FF / Safari / iOS
+4. Reality 2053 — в конце.
 
-На iPhone потянуть подписку. Дома первая **Дом.ru packet-up**. Если не вцепится — вторая **Megafon**.
+На iPhone потянуть подписку. Первая строка должна стать **Дом.ru WS**.
