@@ -1,17 +1,15 @@
-# Sveta, Дом.ru, центр Петербурга
+# Sveta, Дом.ru — только VLESS
 
-Дом.ru DPI режет долгий WS на прямой финский IP и не пускает Reality (2053 / чужой SNI). Cloudflare edge обычно не разбирают так же.
+Дом.ru DPI: долгий WS на `.43:443` рвёт; Reality `:2053` не доходит; `trycloudflare.com` у неё тоже не зашёл. AWG не используем.
 
-## Сейчас
+## Сейчас (VLESS)
 
-1. **Дом.ru CF WS** — WebSocket через `*.trycloudflare.com` (не прямой `.43`). Автоподключение.
-2. **Megafon- Финляндия** — мобильная связь.
-3. **Дом.ru CF stream** — xHTTP stream-one через CF.
-4. **Дом.ru CF** — xHTTP packet-up через CF.
-5. Прямые packet-up / WS / Reality — запас.
+1. **Дом.ru Reality 2083** — Reality, SNI Microsoft, порт **2083**
+2. **Дом.ru Reality 2096** — то же, порт **2096**
+3. **Megafon- Финляндия** — WS 443
+4. **Дом.ru gRPC** — gRPC 443
+5. packet-up / WS / Reality 2053 — запас
 
-Туннель: `cf-front-tunnel.service`. URL Светы: `sveta-cf-front.timer` (чужие хосты не трогает).
+CF-профили у Светы скрыты. На ноде Reality 2083/2096 только для сквада `Sveta-DomRu`.
 
-Happ routing: Telegram в прокси + DoH `1.1.1.1` + IPv4. Убран catch-all `regexp:.*\.ru$` из DirectSites — мешал стабильному проксированию.
-
-На iPhone потянуть подписку. Первая строка — **Дом.ru CF WS**.
+На iPhone потянуть подписку. Первая строка — **Дом.ru Reality 2083**.
