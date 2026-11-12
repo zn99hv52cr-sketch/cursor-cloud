@@ -45,3 +45,12 @@ curl -4 -sS -o /dev/null -w '%{http_code}\n' --connect-timeout 10 https://www.in
 ```
 
 Clash API secret is in `experimental.clash_api.secret` on the device; `main-out` should show `now=main-2-out` unless manually changed.
+
+
+## YouTube RU egress (no EE ads)
+
+Inbound may be `89.125.57.161` / `185.141.217.43`. Tunnel **exit** must be VPS src `193.124.224.248` (`ops/vps-youtube-ee-ads.md`). If YouTube shows EE ads, re-run `egress-src-248.sh` on the FI box — do **not** set default src to `.161`.
+
+## TV (Xiaomi `.164`)
+
+DNS must hit the router (FakeIP + `filter_aaaa`), not `1.1.1.1` (AAAA blackhole). Policy: `/usr/bin/tv-yt-policy` via firewall include. QUIC/DoH blocked; LAN IPv6 forward rejected.
