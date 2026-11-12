@@ -1,0 +1,82 @@
+# YouTube EE logo and ads after 2026-10-15 netplan
+
+2026-10-16. After the Oct 15 “bind only `185.141.217.43`” change, YouTube showed **EE** next to the logo and started serving ads. Seen on the home WR3000P path and by a VPN subscriber. Same VLESS node, not a client bug.
+
+## Cause
+
+Google/YouTube geo of the two AdminVPS addresses (checked with `curl` source bind, `GL` / `hl` in the homepage):
+
+| Source IP | YouTube `GL` | `hl` |
+|-----------|--------------|------|
+| `193.124.224.248` | **RU** | ru |
+| `185.141.217.43` | **EE** | et |
+
+Oct 15 netplan left only `.43/24` as default source (gateway `185.141.217.1` is on that subnet). Xray `remnanode` uses host network, so every tunnel exit became `.43` → Estonian YouTube → ads. Russian YouTube on `.248` had been serving without those ads.
+
+`.43` must stay on the box: that is the RU-reachable inbound. `.248` is still routed to the VM; it was only missing from the OS.
+
+## Applied
+
+- `/etc/netplan/60-extra-ip.yaml`: both `185.141.217.43/24` and `193.124.224.248/32`, default still via `185.141.217.1`. Backup `/root/backups/netplan-20261016-youtube-ee/`.
+- `egress-src-248.service` + `/usr/local/sbin/egress-src-248.sh`: after `network-online`, set default src `.248`, and SNAT docker/AWG ranges (`172.17/16`, `172.18/16`, `172.20/16`, `172.29.172/24`, `10.0.0/24`, `10.8.1/24`) to `.248`. Do **not** SNAT all of `eth0` — that would break replies to inbound `.43`.
+- Did **not** restart remnanode / Caddy / the VPS. Listeners stay on `*:443`.
+
+VLESS (`remnanode` host network) already used the kernel default src. AmneziaWG sits in docker and was still MASQUERADE to `.43` until the SNAT rules; `docker exec amnezia-awg2 curl ifconfig.me` now returns `.248`.
+
+## Check
+
+```sh
+ip -4 route show default    # src 193.124.224.248
+curl -4 -sS https://ifconfig.me/ip   # 193.124.224.248
+# YouTube HTML: "GL":"RU"  "hl":"ru"
+curl -sk --resolve vpn2.sharpmaind.ru:443:185.141.217.43 https://vpn2.sharpmaind.ru/  # inbound .43 still up
+```
+
+Verified 2026-10-16: host and AWG-netns egress `.248`, YouTube `GL=RU`; through WR3000P VLESS YouTube `GL=RU` HTTP 200; Instagram/Telegram 200; `vpn2` on `.43` HTTP 401. Clients should refresh YouTube (or clear cookies) if the EE badge is cached.
+
+This is YouTube’s RU geo of `.248`, not an adblocker. If Google retags the IP, ads can return. NL node (`147.45.111.81`) is a different exit and is unchanged.
+
+## Recurrence 2026-11-08
+
+After the Fri–Sat VLESS path blip, Finnish/EE YouTube ads returned. Cause: default route lost `src 193.124.224.248` (host egress was again `.43`); `egress-src-248.service` had run only at boot (Nov 2) and was not re-applied after a later route reset.
+
+Live fix:
+- Re-ran `/usr/local/sbin/egress-src-248.sh` → default `src .248`, YouTube `GL=RU` / `hl=ru`, remnanode + amnezia-awg3 egress `.248`, inbound `.43` still 401 on panel.
+- Enabled `egress-src-248.timer` (every 5 min + 2 min after boot) so a netplan/docker route wipe does not stick.
+- Optional `networkd-dispatcher/routable.d/50-egress-src-248.sh` if that package is present.
+
+Clients: hard-refresh YouTube / clear site data if EE badge is cached.
+
+## Recurrence 2026-11-12 (EE ads + TV YouTube)
+
+### Cause
+IP migrate to secondary `89.125.57.161` rewrote `egress-src-248` into `egress-src-161.sh`, which set **default src `.161`** and **deleted `.248`**. YouTube geo:
+
+| Source IP | `GL` |
+|-----------|------|
+| `193.124.224.248` | **RU** |
+| `185.141.217.43` | RU (as of 2026-11-12) |
+| `89.125.57.161` | **EE** |
+
+Tunnel entry can stay on `.43` / `.161` (HAProxy inbound). Egress for remnanode/AWG must be **`.248`**.
+
+WR3000P TV (`.164`) was DNATed to `1.1.1.1`, which returned **AAAA**; IPv6 was not tunneled → Smart TV YouTube dead.
+
+### Fix (VPS)
+- Restored `/usr/local/sbin/egress-src-248.sh` to prefer `193.124.224.248`
+- `egress-src-161.sh` is a wrapper → `egress-src-248.sh` (so old unit names cannot re-break geo)
+- netplan `60-extra-ip.yaml`: `.43` + `.161` + `.248`, default `from: 193.124.224.248`
+- timer every 5 min still enabled
+
+### Fix (WR3000P)
+- TV DNS DNAT → router `192.168.1.1` (FakeIP + `filter_aaaa`)
+- Block TV QUIC/DoH + LAN IPv6 forward
+- Extra YT routes helper `/usr/bin/podkop-yt-routes`
+
+### Check
+```sh
+# on VPS
+ip -4 route show default    # src 193.124.224.248
+curl -4 -sS https://ifconfig.me/ip   # 193.124.224.248
+# through WR3000P tunnel: YouTube HTML "GL":"RU" "hl":"ru"
+```
