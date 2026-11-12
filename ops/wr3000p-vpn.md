@@ -54,3 +54,6 @@ Inbound may be `89.125.57.161` / `185.141.217.43`. Tunnel **exit** must be VPS s
 ## TV (Xiaomi `.164`)
 
 DNS must hit the router (FakeIP + `filter_aaaa`), not `1.1.1.1` (AAAA blackhole). Policy: `/usr/bin/tv-yt-policy` via firewall include. QUIC/DoH blocked; LAN IPv6 forward rejected.
+
+### Note 2026-11-12 evening
+Confirmed working: TV YouTube with DNS forced to `192.168.1.1` (FakeIP). `wr-helper tv-policy` no longer installs `1.1.1.1` DNAT (that path returned AAAA and broke the box).
