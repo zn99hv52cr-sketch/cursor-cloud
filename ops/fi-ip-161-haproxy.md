@@ -22,10 +22,19 @@ Do **not** re-add iptables `REDIRECT 161:443 → 9443` — that steals the port 
 2. Prefer **`Reality NEW` / `Beeline Reality` / `MTS Reality`** or any node on `89.125.57.161`.
 3. If 🔄 to `vpn2.sharpmaind.ru` times out: use CF sub URL from panel/`SUB_PUBLIC_DOMAIN`, or refresh while on another VPN (Fornex).
 
-## DNS (still needed for old sub URLs)
+## DNS (reg.ru)
 
-`vpn2.sharpmaind.ru` A is still `185.141.217.43` at **reg.ru**.  
-Change A → `89.125.57.161` so existing in-app subscription URLs open without VPN (HAProxy already terminates `vpn2` SNI on 161).
+| Name | A record |
+|------|----------|
+| `vpn2.sharpmaind.ru` | `89.125.57.161` |
+| `awg.sharpmaind.ru` | `89.125.57.161` |
+
+## AWG (AmneziaWG)
+
+- UDP listener: Docker `amnezia-awg3` on `0.0.0.0:51820` (both IPs).
+- Client **Endpoint** must be `89.125.57.161:51820` (many old `.conf` had hardcoded `185.141.217.43:51820` — DNS change alone does nothing).
+- Host iptables redirects UDP `443/4500/123/53` → `51820` for camouflage ports.
+- **Do not enable Caddy HTTP/3**: `alt-svc: h3` makes browsers switch to QUIC on UDP/443, which is AWG — HTTPS to `awg`/`vpn2` then hangs. Caddyfile must keep `servers { protocols h1 h2 }` (not only `servers :443`, because sites `bind` a specific IP) and strip `Alt-Svc`.
 
 ## CF host updater
 
