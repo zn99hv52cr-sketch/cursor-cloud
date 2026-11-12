@@ -81,3 +81,12 @@ Cloud Agent: `tailscale ssh root@100.81.160.52` — один раз подтве
   - `disable_quic=1`; TV keep `tv-quic-block` for `192.168.1.164`.
   - Rewrite `/etc/dnsmasq.d/vpn2-newip.conf` + `/etc/hosts` → `89.125.57.161` for `vpn2`/`awg`.
 - Verified: sequential HTTP 200/204 for YT/TG/IG/FB via FakeIP; `vpn2` resolves only to 161.
+
+### Boot wrecker (why reboot “undid” the fix)
+
+Custom `/usr/bin/podkop-tun-up` (via `S99podkop-tun`) ran ~20s after boot, converted inbound to TUN, then **`nft flush`’d `PodkopTable` mangle/proxy**. LAN kept FakeIP (`198.18.x`) but lost tproxy → YouTube/TG/IG blackhole after every reboot.
+
+Mitigation on device (2026-11-12 evening):
+- Disabled `podkop-tun`; moved `podkop-tun-up`/`watch` to `*.DISABLED-*`.
+- Added `podkop-guard` to keep tproxy present and kill wrecker if it returns.
+- Stock podkop tproxy restored; urltest WS `89.125.57.161` + `185.141.217.43`.
