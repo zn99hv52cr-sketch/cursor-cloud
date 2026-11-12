@@ -24,7 +24,7 @@ Branch: `cursor/vpn-bot-torrent-toggle-dead` (base: `master`)
 
 | Item | Value |
 |------|--------|
-| Host | `193.124.224.248` (`sharpmaind`) |
+| Host | `89.125.57.161` egress / Reality; primary `185.141.217.43` (`sharpmaind`) |
 | Provider | AdminVPS |
 | Panel | https://vpn2.sharpmaind.ru (Remnawave backend **3.x**) |
 | Node | `remnanode` image `remnawave/node:3.4.1`, `NET_ADMIN`, host network |
@@ -93,8 +93,8 @@ Endpoints: nodes, config-profiles PATCH, nodes `.../actions/restart` with `{"for
 Deploy after bot edit:
 
 ```bash
-scp ops/vpn-bot/bot.py root@193.124.224.248:/opt/vpn-bot/bot.py
-ssh root@193.124.224.248 'cd /opt/vpn-bot && docker compose up -d --force-recreate'
+scp ops/vpn-bot/bot.py root@185.141.217.43:/opt/vpn-bot/bot.py
+ssh root@185.141.217.43 'cd /opt/vpn-bot && docker compose up -d --force-recreate'
 ```
 
 ---

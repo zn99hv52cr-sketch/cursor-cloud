@@ -7,7 +7,7 @@ For continuing work in **Cursor Desktop (local, not Cloud)**, open
 
 ## Deploy path
 
-- Host: `193.124.224.248`
+- Host: `89.125.57.161` (extra public IP; primary iface also `185.141.217.43`)
 - Dir: `/opt/vpn-bot`
 - Compose: `docker compose up -d --force-recreate`
 
