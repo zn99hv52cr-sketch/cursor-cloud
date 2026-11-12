@@ -65,3 +65,9 @@ nslookup chatgpt.com 127.0.0.1
 ## Доступ агента
 
 Cloud Agent: `tailscale ssh root@100.81.160.52` — один раз подтвердить ссылку `https://login.tailscale.com/a/...` в аккаунте sharpmaind. Без этого правки на роутере делаются с вашего ПК или через LuCI → Podkop.
+
+## WR3000P incident 2026-11-12 (YT/TG/IG down)
+
+- Symptom: Wi‑Fi phone + TV — YouTube/Telegram/Instagram dead; direct WAN OK.
+- Cause: `sing-box` crash loop `initialize cache-file: timeout` after podkop rewrite; FakeIP still answered, tunnel did not. Several urltest links still pointed at `185.141.217.43`.
+- Fix: backup `/overlay/backups/wr3000p-podkop-*`, wipe `/tmp/sing-box/cache.db*`, retarget all `urltest_proxy_links` to `89.125.57.161` (Reality/WS/xHTTP/gRPC), `disable_quic=1`, restart podkop. Verified HTTP 200 for YT/TG/IG via FakeIP.
