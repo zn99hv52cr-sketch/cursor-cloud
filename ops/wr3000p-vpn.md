@@ -13,7 +13,7 @@ ISP: Rostelecom (not the same path as TR3000). Lightly compare TR3000 ideas only
 | Nodes | `main-1` = `89.125.57.161:443`, `main-2` = `185.141.217.43:443` |
 | Default | **`main-2-out` (185)** — more stable from Rostelecom |
 | QUIC | blocked on TUN inbound; `podkop.settings.disable_quic=1` |
-| TV `.164` | DNS DNAT → `1.1.1.1`; block DoH/QUIC |
+| TV `.164` | DNS DNAT → router `192.168.1.1` (FakeIP); block DoH/QUIC/IPv6 |
 
 Static `ip route … dev sbtun` covers FakeIP plus Google / Meta / Telegram ranges so apps that bypass FakeIP still hit the tunnel.
 
