@@ -69,24 +69,15 @@ Cloud Agent: `tailscale ssh root@100.81.160.52` — один раз подтве
 
 ## WR3000P incident 2026-11-12 (YT/TG/IG down)
 
-- Symptom: Wi‑Fi phone + TV — YouTube/Telegram/Instagram dead; direct WAN OK.
-- Root causes (stacked):
-  1. `sing-box` crash loop `initialize cache-file: timeout` → FakeIP answered, tunnel dead.
-  2. `urltest_proxy_links` still mostly on `185.141.217.43`.
-  3. Leftover `/etc/dnsmasq.d/vpn2-newip.conf` pinned `vpn2` to `185.141.217.43` (dual A with 161).
-- Fix applied on device:
-  - Backups under `/overlay/backups/wr3000p-podkop-*`, `wr3000p-harden-*`.
-  - Wipe `/tmp/sing-box/cache.db*`, restart podkop/sing-box.
-  - `proxy_config_type=url`, single stable link `vless://…@89.125.57.161:443` WS `/vpn` (Reality delay-tests fail on this OpenWrt via HAProxy; not used).
-  - `disable_quic=1`; TV keep `tv-quic-block` for `192.168.1.164`.
-  - Rewrite `/etc/dnsmasq.d/vpn2-newip.conf` + `/etc/hosts` → `89.125.57.161` for `vpn2`/`awg`.
-- Verified: sequential HTTP 200/204 for YT/TG/IG/FB via FakeIP; `vpn2` resolves only to 161.
+See also `ops/wr3000p-vpn.md` (canonical for this router). **Do not clone TR3000 wholesale** — different ISP (Rostelecom) and FakeIP/TUN layout.
 
-### Boot wrecker (why reboot “undid” the fix)
-
-Custom `/usr/bin/podkop-tun-up` (via `S99podkop-tun`) ran ~20s after boot, converted inbound to TUN, then **`nft flush`’d `PodkopTable` mangle/proxy**. LAN kept FakeIP (`198.18.x`) but lost tproxy → YouTube/TG/IG blackhole after every reboot.
-
-Mitigation on device (2026-11-12 evening):
-- Disabled `podkop-tun`; moved `podkop-tun-up`/`watch` to `*.DISABLED-*`.
-- Added `podkop-guard` to keep tproxy present and kill wrecker if it returns.
-- Stock podkop tproxy restored; urltest WS `89.125.57.161` + `185.141.217.43`.
+- Symptom: Wi‑Fi phone + TV — YouTube/Telegram/Instagram dead; often “green from router” then dead after reboot.
+- Earlier stacked causes: `sing-box` cache crash; stale `185`/`161` DNS pins; Reality unusable via HAProxy on this OpenWrt.
+- **Working stack (device, late 2026-11-12):** same family as historical `bak-dualfix` on **this** WR3000P — not stock tproxy alone:
+  - sing-box inbound **TUN** `sbtun` + FakeIP `198.20.0.0/15` + static routes (Google/Meta/TG) via `sbtun`
+  - Dual VLESS **WS** `/vpn`: `89.125.57.161` (`main-1`) + `185.141.217.43` (`main-2`)
+  - **Prefer `main-2` (185)** as selector default — Rostelecom intermittently `dial tcp 161:443 i/o timeout` while bare TCP still looks fine
+  - `tcp_fast_open=false`
+  - Helpers: `/usr/bin/podkop-tun-up`, `S99podkop-tun` watch, `podkop-guard`, `podkop-path-watch` (flip to 185 if path dies)
+  - TV `192.168.1.164`: DNS DNAT to `1.1.1.1` (bypass FakeIP) + QUIC/DoH blocks
+- Note: `nft flush` of unused `PodkopTable` tproxy chains is expected in TUN mode **only if** `sbtun` + FakeIP routes are present. Disabling `podkop-tun-up` and leaving FakeIP without TUN/routes is what made reboot “undo” earlier fixes.
