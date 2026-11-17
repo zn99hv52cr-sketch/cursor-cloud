@@ -15,7 +15,7 @@ rm -f "$MARK"
 (
   flock -n 9 || exit 0
   if jq -e '.outbounds[] | select(.tag == "cf-urltest-out")' "$CFG" >/dev/null 2>&1; then
-    exit 0
+    exit 2
   fi
   jq --arg cf_a "$CF_A" --arg cf_b "$CF_B" '
     .dns.servers = (
@@ -60,11 +60,15 @@ rm -f "$MARK"
   touch "$MARK"
   logger -t podkop-mgts-tune "applied CF fast path + urltest"
 ) 9>"$LOCK"
+TUNE_RC=$?
 
-[ -f "$MARK" ] || exit 0
+[ -x /usr/bin/podkop-google-direct.sh ] && /usr/bin/podkop-google-direct.sh
+
+[ -f "$MARK" ] || exit "$TUNE_RC"
 rm -f "$MARK"
 kill $(pidof sing-box) 2>/dev/null
 sleep 1
 sing-box run -c "$CFG" -D /usr/share/sing-box >/dev/null 2>&1 &
 sleep 2
 /usr/bin/podkop-tun-up >/dev/null 2>&1 || true
+exit 0
