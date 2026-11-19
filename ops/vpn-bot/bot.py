@@ -1066,15 +1066,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await context.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
         except Exception as exc:
             log.warning("reset menu button failed: %s", exc)
-        try:
-            await open_awg_clients_home(update.message, context, edit=False)
-        except Exception as exc:
-            log.exception("AWG home on /start failed")
-            await update.message.reply_text(
-                f"AWG панель: <code>{esc(str(exc))}</code>",
-                parse_mode="HTML",
-                reply_markup=ops_keyboard(),
-            )
+        await update.message.reply_text(HELP_TEXT, reply_markup=ops_keyboard())
         return
 
     if not AWG_AUTO_CREATE_USERS:
