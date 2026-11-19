@@ -174,8 +174,8 @@ def health_checks_local() -> list[tuple[str, bool]]:
         check_local("Remnawave", "http://127.0.0.1:3001/health"),
         check_local("Uptime Kuma", "http://127.0.0.1:3002/dashboard"),
         check_local("AWG Panel", "http://127.0.0.1:5000/"),
-        check_local("vpn2.sharpmaind.ru", "https://vpn2.sharpmaind.ru/"),
-        check_local("awg.sharpmaind.ru", "https://awg.sharpmaind.ru/"),
+        check_local("vpn2.sharpmaind.ru", "https://vpn2.sharpmaind.ru/", ok_codes={200, 401}),
+        check_local("awg.sharpmaind.ru", "https://awg.sharpmaind.ru/", ok_codes={200, 401}),
     ]
 
 

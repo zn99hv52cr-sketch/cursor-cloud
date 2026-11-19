@@ -38,6 +38,8 @@ Branch: `cursor/vpn-bot-torrent-toggle-dead` (base: `master`)
 
 Also on same VPS (do not break): AmneziaWG `:51820`, Caddy (`vpn2` / `awg` / `kuma`), Telemt MTProxy `:8443` + `/mtpanel`, Uptime Kuma, Remnawave DB/Redis.
 
+**Caddy:** `awg.sharpmaind.ru` and the Remnawave panel UI on `vpn2` use the same HTTP Basic Auth (`andrei`, bcrypt in `/opt/remnawave/caddy/Caddyfile`). `vpn2` `/api/*` stays open for client subscriptions. AWG panel API is only via Basic Auth from the internet; `vpn-bot` uses `http://127.0.0.1:5000` (no Basic Auth).
+
 Repo workspace is ops-only: notes + `ops/vpn-bot/` mirror. **Secrets stay on VPS `.env`, never in git.**
 
 ---
