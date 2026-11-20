@@ -1,14 +1,11 @@
-# TR3000 — фото WhatsApp без VPN
+# TR3000 — фото WhatsApp частично
 
-iTruba (`192.168.2.156`) качает фото с `media-hel3-1.cdn.whatsapp.net` (FakeIP `198.18.5.158`).
-TCP на этот хост живой (HTTP 404 на корень, ~0.4 с). **QUIC (UDP 443) через sbtun — 0 ответов**, приложение висит.
+Все PoP `media-*-cdn.whatsapp.net` с TR по TCP отвечают 404. Часть фоток на телефоне всё равно падает:
 
-На TR:
+- крупные файлы / другой PoP: MSS на sbtun **1120**
+- доп. сети Meta в sbtun (`57.141.0.0/19`, `129.134.0.0/16`, `69.63.176.0/20`, …)
+- QUIC с LAN reject, DoH/DoT в WAN reject
 
-- `iifname br-lan udp dport 443 reject` — весь QUIC с LAN, не только в WAN
-- TCPMSS 1240 на sbtun
-- DoH 8.8.8.8/1.1.1.1:443 в WAN reject
+iPhone `192.168.2.195` держит кучу сессий на `147.125.132.43` (Happ). Пока Happ включён, часть WA уходит в эту ноду и рвётся.
 
-Проверка: hel3 404, `web.telegram.org` 200, YouTube 204.
-
-Убить WhatsApp из карточек и открыть заново. Если на телефоне ещё висит Happ (у iPhone сессии на `147.125.132.43`) — выключить.
+Проверка: hel3/ams/fra 404, TG 200, YT 204.
