@@ -18,13 +18,8 @@ Cursor на Wi‑Fi TR «тупит» (чат, agents, логин), пока н�
 
 **`user_domains`:** `accounts.spacex.ai`, `accounts.x.ai`, `workos.com`, `download.todesktop.com`, `downloads.cursor.com`, `agent-stores.s3.us-east-1.amazonaws.com`.
 
-**`user_subnets`:**
-
-- `104.16.0.0/12` — Cloudflare (api2, downloads, auth)
-- `172.64.0.0/13` — Cloudflare (WorkOS и др.)
-- `76.76.0.0/16` — Vercel (`cursor.com`)
-- `66.33.60.0/23` — доп. фронт cursor.com
-- `44.213.28.243/32`, `98.87.193.55/32`, `34.200.87.105/32` — `repo42` AWS
+**`user_subnets`:** только точечные CF `/32` + Vercel `76.76.0.0/16` + `66.33.60.0/23`.  
+**Нельзя** `104.16.0.0/12` и `172.64.0.0/13` — через туннель уезжает пол-Cloudflare, **YouTube падает**.
 
 ```sh
 sh ops/scripts/tr3000-cursor-wifi.sh

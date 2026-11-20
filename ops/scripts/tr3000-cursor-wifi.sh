@@ -10,7 +10,8 @@ apply() {
       uci add_list "podkop.main.user_domains=$d"
     fi
   done
-  for c in 104.16.0.0/12 172.64.0.0/13 76.76.0.0/16 66.33.60.0/23 44.213.28.243/32 98.87.193.55/32 34.200.87.105/32; do
+  # Do NOT add 104.16.0.0/12 or 172.64.0.0/13 — floods podkop and breaks YouTube.
+  for c in 104.18.18.125/32 104.18.19.125/32 104.18.16.128/32 104.18.17.128/32 104.18.27.231/32 104.18.26.231/32 104.18.19.80/32 104.18.18.80/32 76.76.0.0/16 66.33.60.0/23 44.213.28.243/32 98.87.193.55/32 34.200.87.105/32; do
     if ! uci get podkop.main.user_subnets 2>/dev/null | tr " " "\n" | grep -Fx "$c" >/dev/null; then
       uci add_list "podkop.main.user_subnets=$c"
     fi
