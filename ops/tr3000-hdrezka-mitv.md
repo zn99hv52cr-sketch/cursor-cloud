@@ -1,26 +1,35 @@
-# WR3000P — HDRezka на Mi TV Box
+# TR3000 — HDRezka на Mi TV Box
+
+**Роутер:** Cudy TR3000 (`root@100.81.160.52`). WR3000P не трогаем.
 
 ## Симптом
 
-Приложение HDRezka на Mi TV: долго буферизует видео, превью/API ок.
+Приложение HDRezka на Mi TV: каталог пустой или «почти ничего не грузит», буферизация.
 
-## Причина (2026-11-19)
+## Причина
 
-Podkop гонял **домены** rezka/voidboost через sing-box (fakeip), а **потоки** — на IP CDN **82.221.x** и **179.43.x**. TV часто резолвит DNS сам (Google/DoH) и ходит **на IP** → трафик **мимо** fakeip, **не в прокси** → `user_subnets` этих CDN не содержали.
+1. Список Podkop **Russia inside** включает блок **HDRezka** → DNS fakeip и трафик каталога/API шёл в **FI VPN** → **HTTP 403** с датацентрового IP.
+2. Через VPN недоступны зеркала вроде `hdrzk.org` (API на `82.221.105.13`); с домашнего МГТС ответ нормальный (пусть и с редиректами/403 на отдельных зеркалах).
+3. **Видео** идёт с CDN **voidboost** — его по-прежнему нужно гнать через podkop + `user_subnets` на IP CDN.
 
 ## Фикс на TR3000
 
-В `podkop.main.user_subnets` добавлены:
-
-- `179.43.189.163/32`, `179.43.163.206/32` — hdrezka.ag / static
-- `82.221.105.13/32`, `82.221.128.101/32`, `82.221.0.0/16` — hdrzk.org / voidboost CDN
-- `185.231.220.9/32` — statichdrezka.ac
-- `176.58.49.243/32` — voidcrystal.org
+1. Секция **`hdrezka_direct`** с `connection_type=exclusion` и доменами каталога (см. скрипт).
+2. В **`main.user_domains`** только `voidboost.*` и `voidcrystal.org` (не дублировать hdrezka).
+3. В **`main.user_subnets`**: `82.221.128.101/32`, `176.58.49.243/32` — **без** `82.221.0.0/16` и без `179.43.x` (чтобы API-IP не утащить в туннель).
 
 ```sh
-uci commit podkop && /etc/init.d/podkop restart
+# с хоста с ключом или на самом Cudy:
+sh ops/scripts/tr3000-hdrezka-direct-api.sh
 ```
 
-Проверка: `nft list set inet PodkopTable podkop_subnets | grep 82.221`
+Проверка на роутере:
 
-Домены `hdrzk.org`, `voidboost.*`, `hdrezka.*` уже в `user_domains` — не трогать.
+- `nslookup hdrezka.me 127.0.0.1` — может остаться fakeip `198.18.x` (так задумано в podkop), но маршрут **direct-out** важнее:
+  `podkop show_sing_box_config | jq '.route.rules[] | select(.outbound=="direct-out")'`
+- `nslookup voidboost.net 127.0.0.1` → fakeip (туннель).
+- На TV: полный выход из приложения и повторный запуск.
+
+## Примечание про MGTS
+
+`hdrezka.me` с провайдера может редиректить на `blocked.mgts.ru` — приложение обычно использует зеркала (`hdrzk.org` и т.д.), для них exclusion + прямой выход критичен.
