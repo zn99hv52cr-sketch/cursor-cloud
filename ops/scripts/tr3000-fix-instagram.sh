@@ -25,7 +25,8 @@ fi
 uci set podkop.main.proxy_config_type=urltest
 uci set podkop.main.urltest_check_interval=30m
 uci set podkop.main.urltest_tolerance=100
-for d in scontent.cdninstagram.com igcdn.com instagram.com cdninstagram.com fbcdn.net; do
+for d in scontent.cdninstagram.com igcdn.com instagram.com cdninstagram.com fbcdn.net \
+  upload.telegram.org cdn.telegram.org; do
   uci add_list podkop.main.user_domains="$d" 2>/dev/null || true
 done
 uci commit podkop
@@ -63,6 +64,9 @@ sysctl -p /etc/sysctl.d/99-vpn-bulk.conf 2>/dev/null || true
 
 /etc/init.d/podkop restart
 sleep 6
+# After reboot, MSS + Meta/TG routes only apply via tun-up
+/usr/bin/podkop-tun-up || true
+sleep 3
 /usr/bin/podkop-tun-up || true
 rm -f /tmp/sing-box/cache.db
 killall -HUP dnsmasq 2>/dev/null || true
