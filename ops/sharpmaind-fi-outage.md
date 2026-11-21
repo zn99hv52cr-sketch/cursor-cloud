@@ -21,6 +21,15 @@
 
 Public reports on 2026-11-21 also mention **AdminVPS Finland** VPS not answering SSH.
 
+## AdminVPS console: use HTML VNC (not Java)
+
+The panel button **«Консоль»** often opens **Java VNC**. Modern browsers (Chrome, Edge, Yandex, Firefox) **do not run Java applets** — installing Java on Windows does **not** fix «нужен Java-плагин».
+
+1. Click **«Консоль»** → in the popup toolbar switch **Java VNC** → **HTML VNC** (noVNC in the browser).
+2. Allow the popup for `my.adminvps.ru` if the window is blank.
+3. If HTML VNC is black: wait 30–60s after reboot, or try another browser (Firefox sometimes works when Yandex blocks canvas).
+4. **Qemu Агент: Доступен** in the panel means the VM is running at the hypervisor; external SSH/HTTPS can still be dead while the guest is up (node/network outage).
+
 ## Recovery (requires AdminVPS panel or VNC)
 
 1. Log in: [my.adminvps.ru](https://my.adminvps.ru/) → server **193.124.224.248** (sharpmaind).
