@@ -34,9 +34,16 @@ cp /etc/sing-box/config.json "$DIR/sing-box-config.json" 2>/dev/null || true
 for f in /usr/bin/podkop-tun-up /usr/bin/podkop-restore-mangle.sh \
 	/usr/bin/podkop-restore-table.sh /usr/bin/podkop-guard.sh \
 	/usr/bin/podkop-tg-pick.sh /usr/bin/tr3000-boot-stable.sh \
-	/usr/bin/tr3000-wan-recover /usr/bin/tr3000-singbox-route-fix.sh; do
+	/usr/bin/tr3000-wan-recover /usr/bin/tr3000-singbox-route-fix.sh \
+	/usr/bin/tr3000-tailnet-pin.sh /usr/bin/tr3000-tailscale-watchdog.sh; do
 	[ -f "$f" ] && cp "$f" "$DIR/usr-bin/" 2>/dev/null || true
 done
+
+mkdir -p "$DIR/init.d"
+for f in /etc/init.d/tailnet-pin /etc/init.d/tailscale-no-ssh /etc/init.d/usb-data-mount; do
+	[ -f "$f" ] && cp "$f" "$DIR/init.d/" 2>/dev/null || true
+done
+ls /etc/rc.d/ >"$DIR/init.d/rc.d-listing.txt" 2>/dev/null || true
 cp /etc/sysctl.d/99-*.conf "$DIR/sysctl.d/" 2>/dev/null || true
 cp /etc/dnsmasq.d/*.conf "$DIR/dnsmasq.d/" 2>/dev/null || true
 cp /etc/crontabs/root "$DIR/crontab-root" 2>/dev/null || true
@@ -74,6 +81,8 @@ Restore this snapshot on TR3000 (run as root, from LAN or ssh -p 2222):
   uci import podkop < "$D/uci/podkop.uci" && uci commit podkop
   uci import dhcp   < "$D/uci/dhcp.uci"   && uci commit dhcp
   cp "$D/usr-bin/"* /usr/bin/ && chmod +x /usr/bin/podkop-* /usr/bin/tr3000-*
+  cp "$D/init.d/"tailnet-pin /etc/init.d/ && chmod +x /etc/init.d/tailnet-pin \
+    && /etc/init.d/tailnet-pin enable
   cp "$D/dnsmasq.d/"*.conf /etc/dnsmasq.d/ 2>/dev/null
   cp "$D/sysctl.d/"*.conf /etc/sysctl.d/ 2>/dev/null
   cp "$D/crontab-root" /etc/crontabs/root && /etc/init.d/cron restart
@@ -89,7 +98,17 @@ Rules that must survive any restore:
     /etc/dnsmasq.d/hdrezka-direct.conf.
   * Table podkop needs "default dev sbtun" + 198.18.0.0/15, else blocked sites
     resolve to fakeip and then time out.
-  * Do NOT run tailscale restart / tailscale up --ssh. Agent uses dropbear :2222.
+  * Do NOT run tailscale up --ssh. Remote access is dropbear :2222.
+  * tr3000-tailnet-pin.sh must stay in cron (every minute), in /etc/init.d via
+    S98tailnet-pin, and as the last line of /usr/bin/podkop-tun-up. Without its
+    "meta mark and 0xff0000 == 0x80000 return" rule in PodkopTable, tailscaled's
+    own control-plane and DERP sockets get marked for the podkop table, resolve
+    through fakeip and die on every sing-box restart: peers then show "offline,
+    last seen N min ago", disco pings still answer and every TCP session hangs.
+  * tr3000-tailscale-watchdog.sh in cron (every 5 min) restarts tailscaled when
+    that freeze happens anyway, so remote access repairs itself unattended.
+  * The sing-box controller binds 192.168.2.1:9090 only. Scripts must not call
+    127.0.0.1:9090 — it is refused, and node pinning then silently fails.
 EOF
 
 tar -czf "$DIR.tar.gz" -C "$USB_ROOT/archive" "tr3000-WORKING-$STAMP"

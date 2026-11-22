@@ -149,6 +149,32 @@ chmod +x /etc/init.d/tailscale-no-ssh
 
 **Нет** как замены SSH. Агент в облаке не «кликает» веб-интерфейс; LuCI — для человека. Технически LuCI доступен по Tailscale (`tailscale serve` / `http://100.81.160.52:80`), но это **тот же tailnet**, что и SSH. Пока в статусе **`relay … rx 0`** — не открывается ни **:2222**, ни **http(s)**, ни LuCI.
 
+## Настоящая причина повторяющегося `rx 0` (найдена 23 ноя 2026)
+
+Симптом выглядел как проблема доступа, а был проблемой **управляющего канала tailscaled**.
+
+Что наблюдалось: с агента `tailscale ping` отвечал `pong via DERP(hel)`, но любое TCP-соединение на `:2222` висело и в статусе стояло `tx N rx 0`. На роутере картина была зеркальной: `tailscale status` показывал узел агента как `offline, last seen 41m ago`, его собственный `tailscale ping` до агента давал `timed out`, а TCP на агента — `http=000`.
+
+Почему так: в цепочке `mangle_output` таблицы `PodkopTable` правило `ip daddr 198.18.0.0/15 ... meta mark set 0x00100000` имело ненулевой счётчик, то есть **собственные сокеты tailscaled** (управляющий long-poll и DERP) разрешались через fakeip и уходили в sing-box. При каждом перезапуске sing-box эти соединения рвались, netmap роутера замерзал, и пиры начинали выглядеть offline. DERP-сокет при этом оставался жив, поэтому disco-ping отвечал и узел казался рабочим — именно это сбивало диагностику с толку.
+
+Постоянное решение — `ops/scripts/tr3000-tailnet-pin.sh` плюс `ops/scripts/tr3000-tailscale-watchdog.sh`, устанавливаются одной командой `ops/scripts/tr3000-tailscale-unfreeze.sh`:
+
+- первым правилом в `mangle` и `mangle_output` ставится `meta mark and 0xff0000 == 0x80000 return` — этой меткой tailscaled помечает свои сокеты, так что они больше не попадают в podkop;
+- `ip daddr 100.64.0.0/10 return` в тех же цепочках и `ip rule ... priority 90 to 100.64.0.0/10 table main` (раньше правила podkop с приоритетом 105);
+- `/etc/dnsmasq.d/tailscale-direct.conf` резолвит `tailscale.com` и `tailscale.io` напрямую, минуя fakeip;
+- пин вызывается из cron каждую минуту, из `/etc/init.d/tailnet-pin` (`S98`) при загрузке и последней строкой `/usr/bin/podkop-tun-up`;
+- сторож раз в пять минут ловит заморозку по трём признакам (`BackendState` не `Running`, жалобы health на map poll, ни одного живого пира при живом WAN) и перезапускает tailscaled с паузой 15 минут.
+
+Проверено `ops/scripts/tr3000-resilience-test.sh`: после полного удаления правил cron вернул их за 13 секунд, после `/etc/init.d/podkop restart` правила стояли уже на 30-й секунде, доступ агента и YouTube/Instagram/Telegram не прерывались.
+
+Важно: контроллер sing-box слушает только `192.168.2.1:9090`. Обращение к `127.0.0.1:9090` отклоняется, и закрепление узла молча не срабатывает — в скриптах должен быть LAN-адрес.
+
+## Если LuCI без терминала и SSH просит ключ
+
+В этой сборке (OpenWrt 25.12, Cudy) нет `luci-app-ttyd`, пункта **System → Terminal** не существует, а `luci-app-tailscale` установлен неполно: страница `Службы → Tailscale` отдаёт 404 на `view/tailscale.js`, и в репозитории пакета нет, так что переустановить его нечем.
+
+Вход с ПК на Windows: `ssh -p 2222 root@192.168.2.1` из PowerShell. Если отвечает `Permission denied (publickey)`, пароль для dropbear выключен — включается в **System → Administration**: задать root-пароль в секции **Router Password**, затем в **SSH Access** отметить **Password authentication** и **Allow root logins with password**.
+
 ## Симптом `rx 0` (после ребута «агент не заходит»)
 
 В `tailscale status` на агенте: `cudy-tr3000 … active; relay "hel", tx … rx 0` — до роутера **нет входящего** пути (DERP-only + firewall/dropbear).
