@@ -1,5 +1,22 @@
 # TR3000 — podkop после ребута
 
+## Пустая таблица маршрутов `podkop` (22.11.2026)
+
+Симптом: DNS **работает** (`instagram.com` → `198.18.x`), но IG/YT/TG **таймаутят** и с роутера, и с устройств.
+
+Причина: в таблице `podkop` остаётся только `local default dev lo`. Правило `105: from all fwmark 0x100000 lookup podkop` не находит маршрут, помеченный трафик уходит в WAN и режется провайдером.
+
+Проверка и фикс:
+
+```sh
+ip route show table podkop        # должно быть default dev sbtun + 198.18.0.0/15
+/usr/bin/podkop-restore-table.sh  # ops/scripts/tr3000-podkop-restore-table.sh
+```
+
+Скрипт дописан в конец `/usr/bin/podkop-tun-up` и в cron (каждые 3 мин, если в таблице меньше 3 строк).
+
+**Не путать** с пустым nft mangle (`podkop-restore-mangle.sh`) — там ломаются счётчики, а не маршруты.
+
 ## Симптом
 
 `/etc/init.d/podkop status` → **not running**, хотя VPN «вроде живёт» или, наоборот, постеры/сплит туннель сломаны.
