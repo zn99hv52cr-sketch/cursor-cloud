@@ -4,7 +4,8 @@
 # Deploy: /usr/bin/tr3000-boot-stable.sh
 set -e
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
-API="${PODKOP_API:-http://127.0.0.1:9090/proxies/main-out}"
+# The sing-box controller binds the LAN address only; 127.0.0.1 is refused.
+API="${PODKOP_API:-http://192.168.2.1:9090/proxies/main-out}"
 OUT="${PODKOP_OUT:-main-1-out}"
 BASE="https://raw.githubusercontent.com/zn99hv52cr-sketch/cursor-cloud/cursor/fi-vps-outage-runbook-dead/ops/scripts"
 
@@ -54,7 +55,7 @@ nslookup instagram.com "$LAN" 2>/dev/null | grep -i Address | tail -3
 nslookup instagram.com 127.0.0.42 2>/dev/null | grep -i Address | tail -3
 IG=$(curl -4 -sS -m 15 -o /dev/null -w '%{http_code}' https://www.instagram.com/ 2>/dev/null || echo fail)
 echo "ig=$IG"
-wget -qO- --timeout=3 "$API" 2>/dev/null | grep -o '"now":"[^"]*"' | head -1
+wget -qO- --timeout=3 "$API" 2>/dev/null | grep -o '"now": *"[^"]*"' | head -1
 nft list chain inet PodkopTable mangle 2>/dev/null | grep counter | head -2
 
 logger -t tr-boot-stable "ig=$IG"
