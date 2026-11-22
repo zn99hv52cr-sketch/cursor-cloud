@@ -33,10 +33,19 @@ ip rule show | grep -q "$TAILNET" || {
 # 3) belt and braces: even inside table podkop, tailnet goes out tailscale0.
 ip route replace "$TAILNET" dev tailscale0 table podkop 2>/dev/null
 
-# 4) stop podkop's nftables chains from marking tailnet traffic at all.
+# 4) stop podkop's nftables chains from touching tailscale traffic at all.
+#    The mark bypass matters most: tailscaled stamps its own sockets (control
+#    plane and DERP) with 0x80000, and without this they get marked for the
+#    podkop table, resolve through fakeip and die on every sing-box restart —
+#    which froze the router's netmap and made peers look offline.
 if nft list table inet PodkopTable >/dev/null 2>&1; then
 	for ch in mangle_output mangle; do
 		nft list chain inet PodkopTable "$ch" >/dev/null 2>&1 || continue
+		nft list chain inet PodkopTable "$ch" 2>/dev/null | grep -q '0x00080000' || {
+			nft insert rule inet PodkopTable "$ch" \
+				meta mark and 0x00ff0000 == 0x00080000 counter return 2>/dev/null \
+				&& log "nft: $ch bypasses tailscale mark 0x80000"
+		}
 		nft list chain inet PodkopTable "$ch" 2>/dev/null | grep -q "$TAILNET" || {
 			nft insert rule inet PodkopTable "$ch" ip daddr "$TAILNET" counter return 2>/dev/null \
 				&& log "nft: $ch returns $TAILNET"
@@ -48,7 +57,18 @@ if nft list table inet PodkopTable >/dev/null 2>&1; then
 	}
 fi
 
-# 5) dropbear :2222 must stay reachable from the tailscale zone.
+# 5) tailscale infrastructure must resolve to real IPs, never to fakeip.
+DNSCONF=/etc/dnsmasq.d/tailscale-direct.conf
+[ -f "$DNSCONF" ] || {
+	cat > "$DNSCONF" << 'EOF'
+server=/tailscale.com/1.1.1.1
+server=/tailscale.io/1.1.1.1
+EOF
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+	log "created $DNSCONF and restarted dnsmasq"
+}
+
+# 6) dropbear :2222 must stay reachable from the tailscale zone.
 pidof dropbear >/dev/null 2>&1 || { /etc/init.d/dropbear start; log "dropbear was down, started"; }
 netstat -lnt 2>/dev/null | grep -q ':2222 ' || {
 	uci -q set dropbear.alt=dropbear
@@ -60,7 +80,7 @@ netstat -lnt 2>/dev/null | grep -q ':2222 ' || {
 	log "re-created dropbear :2222"
 }
 
-# 6) tailscale's own SSH server must stay off; it hijacks port 22 and fights dropbear.
+# 7) tailscale's own SSH server must stay off; it hijacks port 22 and fights dropbear.
 tailscale status >/dev/null 2>&1 && {
 	tailscale status --json 2>/dev/null | grep -q '"RunSSH": *true' && {
 		tailscale set --ssh=false --accept-risk=lose-ssh 2>/dev/null
