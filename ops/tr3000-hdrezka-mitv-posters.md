@@ -22,6 +22,29 @@ nslookup i.postimg.cc 127.0.0.42
 
 На ТВ: принудительно остановить приложение → снова открыть каталог.
 
+## После ребута: podkop «running», постеры снова серые
+
+На TR кастомный **`podkop-tun-up`** в конце старта делает `nft flush` для `mangle`/`proxy`, а **`create_nft_rules` в podkop** отрабатывает **до** tun-up — в итоге цепочка mangle пустая, трафик MiTV к `179.43/16` и `198.18.0.0/15` уходит в **WAN direct**.
+
+Проверка:
+
+```sh
+nft list chain inet PodkopTable mangle | grep counter   # пусто = баг
+ip route get 179.43.158.226 from 192.168.2.145 iif br-lan   # eth0 = плохо, sbtun = ок
+```
+
+Фикс: скопировать `ops/scripts/tr3000-podkop-restore-mangle.sh` → `/usr/bin/podkop-restore-mangle.sh`, в конец **`/usr/bin/podkop-tun-up`** добавить строку:
+
+```sh
+/usr/bin/podkop-restore-mangle.sh
+```
+
+После ребута или `podkop restart` — один раз вручную, если забыли hook:
+
+```sh
+/usr/bin/podkop-restore-mangle.sh
+```
+
 ## Чего не делать
 
 - Не убирать **voidboost** / **stream.*** из `hdrezka_direct`.
