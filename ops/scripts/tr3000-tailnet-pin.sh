@@ -1,14 +1,15 @@
 #!/bin/sh
-# TR3000: keep the tailnet (100.64.0.0/10) outside podkop's policy routing.
+# TR3000: keep the plumbing remote access needs, without touching how
+# tailscaled's own traffic leaves the box.
 #
-# Why this exists: podkop's rule "from all fwmark 0x100000 lookup podkop" plus
-# "default dev sbtun" in table podkop swallows packets the router sends back to
-# tailnet peers. DERP disco pings still answer (tailscaled replies inside its
-# already-open DERP socket), so the node looks alive while every inbound TCP
-# session dies with "tx N rx 0". Every podkop/sing-box restart re-created that
-# state, which is why remote access kept dropping.
+# What this does NOT do any more: it used to insert
+# "meta mark and 0xff0000 == 0x80000 return" into PodkopTable, which pushed
+# tailscaled's control-plane and DERP sockets onto the direct WAN path. On this
+# ISP the direct path to Tailscale does not work, so the daemon lost its map
+# poll and every session died. That rule is now actively removed if found.
 #
-# Install: /usr/bin/tr3000-tailnet-pin.sh + cron every minute + boot init.
+# Install: /usr/bin/tr3000-tailnet-pin.sh + cron every minute + boot init +
+# last line of /usr/bin/podkop-tun-up.
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 TAILNET='100.64.0.0/10'
 LOG=/tmp/tailnet-pin.log
@@ -24,28 +25,18 @@ ip route show | grep -q "^$TAILNET dev tailscale0" || {
 }
 
 # 2) tailnet lookups jump to main before podkop's fwmark rule (priority 105)
-#    and before sing-box's auto_route rules.
+#    and before sing-box's auto_route rules, so replies to tailnet peers are
+#    never sent into the tunnel.
 ip rule show | grep -q "$TAILNET" || {
 	ip rule add to "$TAILNET" table main priority 90 2>/dev/null
 	log "added ip rule 90: to $TAILNET table main"
 }
-
-# 3) belt and braces: even inside table podkop, tailnet goes out tailscale0.
 ip route replace "$TAILNET" dev tailscale0 table podkop 2>/dev/null
 
-# 4) stop podkop's nftables chains from touching tailscale traffic at all.
-#    The mark bypass matters most: tailscaled stamps its own sockets (control
-#    plane and DERP) with 0x80000, and without this they get marked for the
-#    podkop table, resolve through fakeip and die on every sing-box restart —
-#    which froze the router's netmap and made peers look offline.
 if nft list table inet PodkopTable >/dev/null 2>&1; then
+	# 3) packets addressed to tailnet peers must not be marked for podkop.
 	for ch in mangle_output mangle; do
 		nft list chain inet PodkopTable "$ch" >/dev/null 2>&1 || continue
-		nft list chain inet PodkopTable "$ch" 2>/dev/null | grep -q '0x00080000' || {
-			nft insert rule inet PodkopTable "$ch" \
-				meta mark and 0x00ff0000 == 0x00080000 counter return 2>/dev/null \
-				&& log "nft: $ch bypasses tailscale mark 0x80000"
-		}
 		nft list chain inet PodkopTable "$ch" 2>/dev/null | grep -q "$TAILNET" || {
 			nft insert rule inet PodkopTable "$ch" ip daddr "$TAILNET" counter return 2>/dev/null \
 				&& log "nft: $ch returns $TAILNET"
@@ -55,17 +46,24 @@ if nft list table inet PodkopTable >/dev/null 2>&1; then
 		nft insert rule inet PodkopTable mangle iifname "tailscale0" counter return 2>/dev/null \
 			&& log "nft: mangle returns iif tailscale0"
 	}
+
+	# 4) drop the harmful bypass if an older version of this script left it.
+	for ch in mangle_output mangle; do
+		nft -a list chain inet PodkopTable "$ch" 2>/dev/null | grep '0x00080000' \
+			| sed -n 's/.*handle \([0-9]*\)$/\1/p' | while read -r h; do
+			nft delete rule inet PodkopTable "$ch" handle "$h" 2>/dev/null \
+				&& log "nft: removed tailscale mark bypass from $ch"
+		done
+	done
 fi
 
-# 5) tailscale infrastructure must resolve to real IPs, never to fakeip.
-DNSCONF=/etc/dnsmasq.d/tailscale-direct.conf
-[ -f "$DNSCONF" ] || {
-	cat > "$DNSCONF" << 'EOF'
-server=/tailscale.com/1.1.1.1
-server=/tailscale.io/1.1.1.1
-EOF
+# 5) tailscale infrastructure must keep resolving the way the tunnel expects.
+#    Forcing it to a plain upstream resolver bypasses the tunnel and breaks the
+#    control plane on this ISP.
+[ -f /etc/dnsmasq.d/tailscale-direct.conf ] && {
+	rm -f /etc/dnsmasq.d/tailscale-direct.conf
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
-	log "created $DNSCONF and restarted dnsmasq"
+	log "removed tailscale-direct.conf and restarted dnsmasq"
 }
 
 # 6) dropbear :2222 must stay reachable from the tailscale zone.
