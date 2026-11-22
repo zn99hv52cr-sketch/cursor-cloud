@@ -110,6 +110,30 @@ chmod +x /etc/init.d/tailscale-no-ssh
 
 ---
 
+## LuCI для Cloud Agent?
+
+**Нет** как замены SSH. Агент в облаке не «кликает» веб-интерфейс; LuCI — для человека. Технически LuCI доступен по Tailscale (`tailscale serve` / `http://100.81.160.52:80`), но это **тот же tailnet**, что и SSH. Пока в статусе **`relay … rx 0`** — не открывается ни **:2222**, ни **http(s)**, ни LuCI.
+
+## Симптом `rx 0` (после ребута «агент не заходит»)
+
+В `tailscale status` на агенте: `cudy-tr3000 … active; relay "hel", tx … rx 0` — до роутера **нет входящего** пути (DERP-only + firewall/dropbear).
+
+**Один раз с LAN** (LuCI → System → **Terminal**, или `ssh root@192.168.2.1`):
+
+Скопируй на роутер и выполни `ops/scripts/tr3000-fix-agent-access-lan.sh` (LuCI Terminal: вставь содержимое целиком, или с ПК `scp` + `sh`).
+
+Скрипт: ключ агента, **dropbear :2222 на всех интерфейсах**, firewall **tailscale → 2222**, **RunSSH=false**.
+
+Проверка с телефона с Tailscale:
+
+```sh
+ssh -p 2222 root@100.81.160.52
+```
+
+Если с телефона ок, а агент всё ещё `rx 0` — в [админке Tailscale](https://login.tailscale.com/admin/machines) у **cudy-tr3000**: снять key expiry, переподключить; на роутере проверить, что **UDP 41641** не режется провайдером (иначе останется relay).
+
+После успешной проверки напиши агенту **«доступ открыт»** — сразу выполнится `tr3000-hdrezka-mitv-apply.sh`.
+
 ## Сводка
 
 | Способ | Нужен ты | Постоянство |
@@ -118,3 +142,4 @@ chmod +x /etc/init.d/tailscale-no-ssh
 | Клик `/a/...` | Да, раз на связку агент↔аккаунт | Повтор при новой VM/ссылке |
 | ACL SSH в админке | Настройка один раз | Да, с редким `/a/` |
 | `tailscale set --ssh=false` + 2222 | Один раз с LAN | Да |
+| LuCI Terminal + `fix-agent-access-lan.sh` | Один раз с LAN | Чинит `rx 0` / 2222 |
