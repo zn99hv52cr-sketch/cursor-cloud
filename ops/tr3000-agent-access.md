@@ -66,6 +66,39 @@ tailscale ssh root@100.81.160.52
 
 ---
 
+## Для Cloud Agent — что реально включать
+
+**Облако НЕ использует «Tailscale SSH» на порту 22.** Оно заходит так же, как на WR:
+
+```text
+ssh -p 2222 -i wr3000p_ed25519 root@100.81.160.52
+```
+
+Один раз с LAN (Termius):
+
+```sh
+wget -O- "https://raw.githubusercontent.com/zn99hv52cr-sketch/cursor-cloud/cursor/fi-vps-outage-runbook-dead/ops/scripts/tr3000-agent-access-permanent.sh" | sh
+```
+
+В админке Tailscale **дополнительно** (если нужен ещё и `tailscale ssh` с телефона на :22) — [Access controls → SSH](https://login.tailscale.com/admin/acls), в JSON:
+
+```json
+"ssh": [
+  {
+    "action": "accept",
+    "src": ["tag:cursor-cloud"],
+    "dst": ["tag:TR3000"],
+    "users": ["root"]
+  }
+]
+```
+
+У **cursor-cloud** и **cudy-tr3000** должны быть теги; **Check mode: Off** для этого правила (или один раз клик `/a/...`).
+
+**Не включай** на роутере routine `tailscale up --ssh` / полный `tailscale restart` — убивает rx и podkop. RunSSH на :22 **выключен** специально; агент = **2222**.
+
+---
+
 ## Вариант C — постоянно без Tailscale SSH (рекомендуется для агента)
 
 Один раз с дома (LAN `ssh root@192.168.2.1` или LuCI → Terminal):
