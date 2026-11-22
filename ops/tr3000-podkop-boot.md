@@ -17,6 +17,20 @@ ip route show table podkop        # должно быть default dev sbtun + 19
 
 **Не путать** с пустым nft mangle (`podkop-restore-mangle.sh`) — там ломаются счётчики, а не маршруты.
 
+## Секция `podkop.hdrezka_direct` валит sing-box
+
+`FATAL ... initialize DNS rule[2]: rule-set not found: hdrezka_direct-user-domains-ruleset` → procd crash loop → `podkop-tun-up` на каждом старте чистит таблицу → запрещёнка то работает, то нет.
+
+`tr3000-singbox-route-fix.sh` вырезает этот ruleset только из `route`, но **не из `dns.rules`**, поэтому не помогает.
+
+Решение: секция **удалена** из `/etc/config/podkop`. HDrezka остаётся direct через `/etc/dnsmasq.d/hdrezka-direct.conf` (реальный DNS вместо fakeip). Бэкап старого конфига — `/root/podkop-before-hdrezka-fix.uci`.
+
+## Нода, которая «пингуется», но режет TLS
+
+Clash API `/delay` может отдать 200–400 мс, а Telegram на той же ноде падает с `SSL - The connection indicated an EOF`. Поэтому `tr3000-podkop-guard.sh` проверяет **YouTube 204 + Telegram 200**, и только потом считает ноду живой. На 22.11 рабочая — **`main-1-out`**.
+
+Из cron убран `*/5 ... tr3000-boot-stable.sh`: он срабатывал на короткой таблице маршрутов и пинил мёртвую `main-5-out`. Дефолт в `tr3000-boot-stable.sh` переключён на `main-1-out`.
+
 ## Симптом
 
 `/etc/init.d/podkop status` → **not running**, хотя VPN «вроде живёт» или, наоборот, постеры/сплит туннель сломаны.

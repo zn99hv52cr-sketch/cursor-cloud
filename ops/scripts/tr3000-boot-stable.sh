@@ -5,7 +5,7 @@
 set -e
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 API="${PODKOP_API:-http://127.0.0.1:9090/proxies/main-out}"
-OUT="${PODKOP_OUT:-main-5-out}"
+OUT="${PODKOP_OUT:-main-1-out}"
 BASE="https://raw.githubusercontent.com/zn99hv52cr-sketch/cursor-cloud/cursor/fi-vps-outage-runbook-dead/ops/scripts"
 
 logger -t tr-boot-stable "start out=$OUT"
@@ -36,6 +36,7 @@ fi
 
 /usr/bin/podkop-tun-up >/tmp/tun-boot-stable.log 2>&1 || true
 /usr/bin/podkop-restore-mangle.sh 2>/dev/null || true
+/usr/bin/podkop-restore-table.sh 2>/dev/null || true
 rm -f /tmp/sing-box/cache.db 2>/dev/null || true
 
 # Pin outbound (user: main-5-out)
