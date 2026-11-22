@@ -219,7 +219,9 @@ https://raw.githubusercontent.com/zn99hv52cr-sketch/cursor-cloud/cursor/fi-vps-o
 
 ## 10. Полный бэкап (сначала сделай это)
 
-Архива «с диска роутера» у cloud agent **нет** — его нужно **создать на Cudy**. В tarball входит **`koti-k-kotikey/`** с USB (subscription links для podkop).
+**Источник истины — флешка роутера:** `/mnt/usb/backups/` (в т.ч. **`koty-k-kotikey/urltest-preferred.links`**). Там уже лежит рабочий бэкап; cloud agent к флешке **не подключался** — только упакуй и скинь в TG.
+
+Упаковка для отправки: `tr3000-export-usb-backup.sh` (берёт готовый `.tar.gz` с USB **или** пакует всё дерево `backups/`).
 
 На роутере (Termius `root@Cudy`):
 

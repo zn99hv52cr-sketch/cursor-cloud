@@ -1,6 +1,12 @@
 # Восстановление TR3000 из `tr3000-backup-*.tar.gz`
 
-Бэкап **не хранится в git** (там KotiKey subscription links). Архив создаётся **на роутере** (`tr3000-backup-full.sh`).
+**Рабочий бэкап уже на USB TR:** `/mnt/usb/backups/` (+ `koty-k-kotikey/`). В git его нет (секреты).
+
+| Задача | Скрипт |
+|--------|--------|
+| Упаковать флешку → один `.tar.gz` для TG/ПК | `tr3000-export-usb-backup.sh` |
+| Восстановить KotiKey/podkop с флешки на месте | `tr3000-restore-from-usb.sh` |
+| Снимок UCI+nft «сейчас» (дополнительно) | `tr3000-backup-full.sh` |
 
 ## 1. Создать архив (Cudy, Termius)
 
