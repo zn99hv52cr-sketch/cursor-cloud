@@ -7,7 +7,7 @@
 set -e
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
-    10|[ -x /etc/init.d/usb-data-mount ] && /etc/init.d/usb-data-mount start
+[ -x /etc/init.d/usb-data-mount ] && /etc/init.d/usb-data-mount start
 sleep 1
 
 USB_ROOT="/mnt/usb/backups"
@@ -17,7 +17,7 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 DIR="$USB_ROOT/archive/tr3000-WORKING-$STAMP"
 mkdir -p "$DIR/uci" "$DIR/usr-bin" "$DIR/sysctl.d" "$DIR/dnsmasq.d" "$DIR/live"
 
-    20|save() { f="$1"; shift; "$@" >"$DIR/$f" 2>&1 || echo "(failed)" >"$DIR/$f"; }
+save() { f="$1"; shift; "$@" >"$DIR/$f" 2>&1 || echo "(failed)" >"$DIR/$f"; }
 
 # --- UCI ---
 save uci/all.txt uci show
@@ -27,7 +27,7 @@ done
 cp -a /etc/config "$DIR/etc-config" 2>/dev/null || true
 
 # --- sing-box + podkop runtime ---
-    30|cp /etc/sing-box/config.json "$DIR/sing-box-config.json" 2>/dev/null || true
+cp /etc/sing-box/config.json "$DIR/sing-box-config.json" 2>/dev/null || true
 [ -d /tmp/sing-box/rulesets ] && cp -a /tmp/sing-box/rulesets "$DIR/sing-box-rulesets" 2>/dev/null || true
 
 # --- custom scripts that keep blocked sites alive ---
@@ -37,7 +37,7 @@ for f in /usr/bin/podkop-tun-up /usr/bin/podkop-restore-mangle.sh \
 	/usr/bin/tr3000-wan-recover /usr/bin/tr3000-singbox-route-fix.sh; do
 	[ -f "$f" ] && cp "$f" "$DIR/usr-bin/" 2>/dev/null || true
 done
-    40|cp /etc/sysctl.d/99-*.conf "$DIR/sysctl.d/" 2>/dev/null || true
+cp /etc/sysctl.d/99-*.conf "$DIR/sysctl.d/" 2>/dev/null || true
 cp /etc/dnsmasq.d/*.conf "$DIR/dnsmasq.d/" 2>/dev/null || true
 cp /etc/crontabs/root "$DIR/crontab-root" 2>/dev/null || true
 cp /etc/dropbear/authorized_keys "$DIR/dropbear-authorized_keys" 2>/dev/null || true
@@ -47,7 +47,7 @@ cp /tmp/dhcp.leases "$DIR/dhcp.leases" 2>/dev/null || true
 save live/nft-ruleset.txt nft list ruleset
 save live/ip-rule.txt ip rule
 save live/ip-route-main.txt ip route
-    50|save live/ip-route-podkop.txt sh -c 'ip route show table podkop'
+save live/ip-route-podkop.txt sh -c 'ip route show table podkop'
 save live/netstat.txt sh -c 'pidof sing-box; netstat -lnpt 2>/dev/null | grep -E ":53|:2222|:1602|:9090"'
 save live/main-out.txt sh -c 'wget -qO- --timeout=4 http://192.168.2.1:9090/proxies/main-out 2>/dev/null | head -c 2000'
 save live/dns.txt sh -c 'for d in instagram.com youtube.com t.me web.telegram.org st.hdrezka.ac; do echo "== $d"; nslookup "$d" 192.168.2.1 2>&1 | grep -i Address; done'
@@ -57,7 +57,7 @@ YT=$(curl -4 -sS -m10 -o /dev/null -w '%{http_code}' https://www.youtube.com/gen
 IG=$(curl -4 -sS -m12 -o /dev/null -w '%{http_code}' https://www.instagram.com/ 2>/dev/null || echo fail)
 TG=$(curl -4 -sS -m10 -o /dev/null -w '%{http_code}' https://web.telegram.org/ 2>/dev/null || echo fail)
 NOW=$(wget -qO- --timeout=4 http://192.168.2.1:9090/proxies/main-out 2>/dev/null | grep -o '"now":"[^"]*"' | head -1)
-    60|
+
 cat >"$DIR/HEALTH.txt" << EOF
 TR3000 snapshot $STAMP (router local time: $(date))
 uptime: $(uptime)
@@ -67,7 +67,7 @@ youtube=$YT instagram=$IG telegram=$TG
 podkop table rows: $(ip route show table podkop | wc -l)
 EOF
 
-    70|cat >"$DIR/RESTORE.txt" << 'EOF'
+cat >"$DIR/RESTORE.txt" << 'EOF'
 Restore this snapshot on TR3000 (run as root, from LAN or ssh -p 2222):
 
   D=/mnt/usb/backups/archive/tr3000-WORKING-<stamp>
