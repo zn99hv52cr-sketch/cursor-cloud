@@ -50,12 +50,22 @@ uci commit dhcp
 
 killall -9 uci 2>/dev/null || true
 
+# Soft apply: NEVER /etc/init.d/podkop restart here — it drops Tailscale :2222 for minutes
 /etc/init.d/dnsmasq restart
-/etc/init.d/podkop restart
-sleep 12
+if ! pidof sing-box >/dev/null 2>&1; then
+	/usr/bin/podkop start >/tmp/podkop-mitv-apply.log 2>&1 || true
+	sleep 8
+else
+	# refresh rulesets without full tear-down when possible
+	/usr/bin/podkop list_update >/tmp/podkop-list-update.log 2>&1 || true
+	sleep 3
+fi
+[ -x /usr/bin/podkop-tun-up ] && /usr/bin/podkop-tun-up >/tmp/tun-mitv.log 2>&1 || true
 /usr/bin/podkop-restore-mangle.sh 2>/dev/null || true
 rm -f /tmp/sing-box/cache.db
 killall -HUP dnsmasq 2>/dev/null || true
+# Keep RunSSH off without restarting tailscaled
+tailscale set --ssh=false --accept-risk=lose-ssh 2>/dev/null || true
 
 # Sanity
 SB=$(pidof sing-box | wc -l)

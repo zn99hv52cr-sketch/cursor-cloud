@@ -27,12 +27,14 @@ sleep 2
 
 # Restart sing-box if still broken
 if ! nslookup instagram.com 127.0.0.42 >/dev/null 2>&1; then
-	logger -t tr-recover "dns-in broken -> podkop restart"
-	/etc/init.d/podkop restart
-	sleep 12
+	logger -t tr-recover "dns-in broken -> soft sing-box restart (no podkop restart)"
+	/etc/init.d/sing-box restart 2>/dev/null || true
+	sleep 5
+	[ -x /usr/bin/podkop-tun-up ] && /usr/bin/podkop-tun-up || true
 	[ -x /usr/bin/podkop-restore-mangle.sh ] && /usr/bin/podkop-restore-mangle.sh || true
 	/etc/init.d/dnsmasq restart
 fi
+tailscale set --ssh=false --accept-risk=lose-ssh 2>/dev/null || true
 
 SB=$(pidof sing-box | wc -l)
 FD=$(nslookup instagram.com 127.0.0.42 2>/dev/null | tail -1)

@@ -15,14 +15,14 @@ fi
 
 killall -9 uci podkop-tun-up 2>/dev/null || true
 
+# Soft only — never /etc/init.d/podkop restart (kills cloud SSH via Tailscale)
 if pidof sing-box >/dev/null 2>&1; then
 	/etc/init.d/sing-box restart
 else
-	/etc/init.d/podkop stop 2>/dev/null || true
-	sleep 2
-	/usr/bin/podkop start >/tmp/podkop-dns-fix.log 2>&1 &
-	sleep 15
+	/usr/bin/podkop start >/tmp/podkop-dns-fix.log 2>&1 || true
+	sleep 10
 fi
+tailscale set --ssh=false --accept-risk=lose-ssh 2>/dev/null || true
 
 [ -x /usr/bin/podkop-tun-up ] && /usr/bin/podkop-tun-up
 [ -x /usr/bin/podkop-restore-mangle.sh ] && /usr/bin/podkop-restore-mangle.sh

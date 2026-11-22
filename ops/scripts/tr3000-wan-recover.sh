@@ -63,16 +63,23 @@ fi
 [ -x /usr/bin/podkop-tun-up ] && /usr/bin/podkop-tun-up >/tmp/tun-wan-recover.log 2>&1 || true
 [ -x /usr/bin/podkop-restore-mangle.sh ] && /usr/bin/podkop-restore-mangle.sh || true
 
+# NEVER: full tailscale restart, NEVER: --ssh (kills cloud :2222 / enables RunSSH on :22)
 if ! pidof tailscaled >/dev/null 2>&1; then
 	[ -x /etc/init.d/tailscale ] && /etc/init.d/tailscale start
-	sleep 3
+	sleep 5
 fi
 if [ -x /usr/sbin/tailscale ] && [ -S /var/run/tailscale/tailscaled.sock ]; then
+	/usr/sbin/tailscale --socket /var/run/tailscale/tailscaled.sock set \
+		--ssh=false --accept-risk=lose-ssh 2>/dev/null || true
+	/usr/sbin/tailscale --socket /var/run/tailscale/tailscaled.sock set \
+		--advertise-routes=192.168.2.0/24,192.168.1.254/32 \
+		--accept-dns=false 2>/dev/null || \
 	/usr/sbin/tailscale --socket /var/run/tailscale/tailscaled.sock up \
 		--accept-dns=false \
 		--advertise-routes=192.168.2.0/24,192.168.1.254/32 \
 		--hostname=cudy-tr3000 \
-		--ssh >/tmp/tailscale-up.log 2>&1 || true
+		--ssh=false \
+		--accept-risk=lose-ssh >/tmp/tailscale-up.log 2>&1 || true
 fi
 
 ok_sb=0
