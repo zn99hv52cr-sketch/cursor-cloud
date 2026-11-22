@@ -172,6 +172,7 @@ logread | grep tr3000-wan-recover | tail -5   # boot: skip reload, не "podkop 
 
 ## Чего не делать
 
+- **Не добавлять свой VPS в podkop** — исходящий **main** только **KotiKey** (см. FULL handoff §2).
 - Не убирать **voidboost** / **stream.voidboost.*** из `hdrezka_direct`.
 - Не добавлять poster CDN в `hdrezka_direct` (старый `tr3000-hdrezka-posters-fix.sh` — устарел).
 - Не делать полный **`/etc/init.d/tailscale restart`** в routine fix (роняет podkop и 2222).

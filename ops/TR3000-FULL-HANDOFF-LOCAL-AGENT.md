@@ -48,6 +48,22 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGdYxd9EAfEsQipBfEwneZqUjd3RL3LZQat39Hj8K2gb
   - **`podkop.hdrezka_direct` (exclusion):** voidboost*, stream.voidboost.* — **только WAN direct** (видео).
   - **`podkop.main` (VPN):** poster CDN домены + **user_subnets** `179.43.0.0/16`, `82.221.0.0/16`, `195.154.239.0/24`, `185.231.220.9/32`.
 
+### Политика исходящих в podkop (обязательно для агента)
+
+**В podkop на TR3000 только KotiKey — не личный/FI VPS.**
+
+- Исходящий трафик `podkop.main` → **только ноды KotiKey** (`main-1-out` … `main-N-out`, urltest по их link’ам).
+- **Нельзя** добавлять в podkop своий VPS (FI Remnawave, AdminVPS, WireGuard на `193.124.224.248`, «домашний» outbound и т.п.) — VPS для **AWG/HAPP/панели/бота**, не для podkop main.
+- Список link’ов: `podkop.main.urltest_proxy_links` из **`/mnt/usb/backups/koty-k-kotikey/urltest-preferred.links`** (первые **4** ноды — рабочий компромисс IG/TG; см. `tr3000-fix-instagram.sh`).
+- Селектор **`main-out`**: предпочтительно **`main-1-out`**; не подсовывать VPS и не ломать urltest ради HDrezka.
+- Проверка после правок:
+
+```sh
+uci get podkop.main.urltest_proxy_links | tr ' ' '\n' | head -6
+wget -qO- --timeout=3 http://127.0.0.1:9090/proxies/main-out 2>/dev/null | grep -o '"now":"[^"]*"' | head -1
+# now должно быть main-*-*-out (KotiKey), не vps/remna/custom
+```
+
 ---
 
 ## 3. Root cause — пустой nft mangle
@@ -251,6 +267,7 @@ tailscale set --ssh=false --accept-risk=lose-ssh
 
 ## 12. Чего не делать (ещё раз)
 
+- **Не добавлять свой VPS в podkop** — только **KotiKey** в `main` / urltest.
 - Не переносить poster CDN в `hdrezka_direct`.
 - Не выкидывать voidboost из `hdrezka_direct`.
 - Не `tailscale restart` в скриптах восстановления.
@@ -295,6 +312,7 @@ https://github.com/zn99hv52cr-sketch/cursor-cloud/blob/cursor/fi-vps-outage-runb
 Continue TR3000 from @ops/TR3000-FULL-HANDOFF-LOCAL-AGENT.md (branch cursor/fi-vps-outage-runbook-dead).
 SSH: root@192.168.2.1 or ssh -p 2222 root@100.81.160.52.
 Do NOT tailscale restart, do NOT tailscale up --ssh, avoid podkop restart.
+Podkop main outbound: KotiKey ONLY — never add user's FI/VPS nodes to podkop.
 Priorities: (1) iOS WiFi blocked sites, (2) MiTV HDrezka posters, (3) stable cloud agent :2222.
 Always run tr3000-backup-full.sh before invasive changes.
 ```
