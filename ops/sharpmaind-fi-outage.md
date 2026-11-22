@@ -1,5 +1,16 @@
 # FI VPS outage — AWG panel + Telegram bot (2026-11-21)
 
+## Status check (2026-11-22, cloud agent)
+
+| Check | Result |
+|-------|--------|
+| `https://awg.sharpmaind.ru/` | HTTP **401** (TLS + Caddy up; basic auth) |
+| `https://vpn2.sharpmaind.ru/` | HTTP **401** |
+| ICMP `193.124.224.248` | No reply (often filtered) |
+| SSH `root@193.124.224.248` | No key/password in this environment (`SSHPASS` unset) |
+
+Panels and bot path look **recovered** from the outside. Use AdminVPS console or SSH from your network if the host wedges again. Full outage symptoms below still apply when HTTPS/SSH time out together.
+
 ## Symptoms
 
 - `https://awg.sharpmaind.ru/` — timeout from RU and from Cloud Agent
