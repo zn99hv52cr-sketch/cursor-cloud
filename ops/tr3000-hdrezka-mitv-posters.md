@@ -4,25 +4,13 @@
 
 Плеер и **voidboost** идут через **exclusion `hdrezka_direct` → direct** (это трогать нельзя).
 
-Постеры MiTV/Lumen часто с других хостов (**`static.hdrezka.ac`**, **`i.postimg.cc`**, зеркала), которых нет в `hdrezka_direct`. Тогда трафик попадает в **main-out (VPN/FakeIP)** → TCP/DNS для картинок рвётся, на ТВ серые плитки. Метаданные (названия) приходят по API.
+Поиск/каталог тянет **`st.hdrezka.ac`**, **`static.hdrezka.ac`**, postimg. С **WAN direct** к `179.43.x` часто **таймаут** (DPI), а **voidboost** на direct живёт. Если эти хосты в `hdrezka_direct` → серые плитки после поиска при рабочем видео. MiTV может идти на CDN **по IP** (DoH) — нужны `user_subnets` на `179.43/16`, `82.221/16`.
 
-## Фикс (только постеры, видео не меняем)
+## Фикс (постеры через VPN, voidboost — direct)
 
-На TR3000 (`ssh root@192.168.2.1`):
+Скрипт: `ops/scripts/tr3000-hdrezka-search-posters.sh` (или с TR: `ssh tr3000 'sh -s' < …`).
 
-```sh
-for d in \
-  i.postimg.cc postimg.cc postimg.top \
-  static.hdrezka.ac statichdrezka.ac st.hdrezka.ac \
-  hdrezka-home.tv hdrzk.org image.tmdb.org; do
-  uci add_list podkop.hdrezka_direct.user_domains="$d" 2>/dev/null || true
-done
-uci commit podkop
-/etc/init.d/podkop restart
-sleep 5
-killall -HUP dnsmasq 2>/dev/null
-rm -f /tmp/sing-box/cache.db
-```
+Кратко: убрать poster-домены из `hdrezka_direct`, добавить в `podkop.main.user_domains` + подсети CDN в `podkop.main.user_subnets`, `podkop restart`.
 
 Проверка с роутера:
 
