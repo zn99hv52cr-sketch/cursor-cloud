@@ -1,5 +1,7 @@
 # Handoff: TR3000 podkop + HDrezka MiTV + доступ Cloud Agent
 
+**Полная версия (бэкап + iOS + всё):** [`TR3000-FULL-HANDOFF-LOCAL-AGENT.md`](./TR3000-FULL-HANDOFF-LOCAL-AGENT.md)
+
 Контекст для **локального агента** (LAN SSH или когда `ssh -p 2222 root@100.81.160.52` с tailnet работает).
 
 ## Цели
