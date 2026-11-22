@@ -23,6 +23,7 @@ if ! uci show firewall 2>/dev/null | grep -q 'LAN-DNS-REDIRECT'; then
 	uci add firewall redirect
 	uci set firewall.@redirect[-1].name='LAN-DNS-REDIRECT'
 	uci set firewall.@redirect[-1].src='lan'
+	uci set firewall.@redirect[-1].dest='lan'
 	uci set firewall.@redirect[-1].src_dport='53'
 	uci set firewall.@redirect[-1].proto='tcp udp'
 	uci set firewall.@redirect[-1].target='DNAT'
