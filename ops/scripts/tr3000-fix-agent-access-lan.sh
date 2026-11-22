@@ -41,14 +41,10 @@ if ! uci show firewall 2>/dev/null | grep -q 'Allow-SSH-2222-Tailscale'; then
 	/etc/init.d/firewall reload
 fi
 
-echo "=== 4) tailscale: RunSSH off, keep tailnet up ==="
-/etc/init.d/tailscale restart
-sleep 8
+echo "=== 4) tailscale: RunSSH off (no full restart — keeps podkop/sing-box up) ==="
 tailscale set --ssh=false --accept-risk=lose-ssh 2>/dev/null || true
 tailscale set --advertise-routes=192.168.2.0/24,192.168.1.254/32 \
-	--accept-dns=false --hostname=cudy-tr3000 2>/dev/null || \
-	tailscale up --accept-dns=false --advertise-routes=192.168.2.0/24,192.168.1.254/32 \
-		--hostname=cudy-tr3000 --reset 2>/dev/null || true
+	--accept-dns=false --hostname=cudy-tr3000 2>/dev/null || true
 
 if [ ! -x /etc/init.d/tailscale-no-ssh ]; then
 	cat > /etc/init.d/tailscale-no-ssh << 'EOF'
