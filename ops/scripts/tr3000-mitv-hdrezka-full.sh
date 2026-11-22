@@ -44,6 +44,7 @@ uci commit dhcp
 /etc/init.d/dhcp restart 2>/dev/null || /etc/init.d/dnsmasq restart
 /etc/init.d/podkop restart
 sleep 10
+[ -x /usr/bin/podkop-restore-mangle.sh ] && /usr/bin/podkop-restore-mangle.sh
 rm -f /tmp/sing-box/cache.db
 killall -HUP dnsmasq 2>/dev/null || true
 
