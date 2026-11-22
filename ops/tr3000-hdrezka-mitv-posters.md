@@ -22,7 +22,11 @@ nslookup i.postimg.cc 127.0.0.42
 
 На ТВ: принудительно остановить приложение → снова открыть каталог.
 
-## После ребута: podkop «running», постеры снова серые
+## После ребута
+
+Подробно: [tr3000-podkop-boot.md](./tr3000-podkop-boot.md) (status `not running`, wan-recover reload, mangle).
+
+### Постеры снова серые
 
 На TR кастомный **`podkop-tun-up`** в конце старта делает `nft flush` для `mangle`/`proxy`, а **`create_nft_rules` в podkop** отрабатывает **до** tun-up — в итоге цепочка mangle пустая, трафик MiTV к `179.43/16` и `198.18.0.0/15` уходит в **WAN direct**.
 
