@@ -23,6 +23,27 @@ cp /etc/dropbear/authorized_keys "$DIR/dropbear-authorized_keys" 2>/dev/null || 
 cp /etc/crontabs/root "$DIR/crontab-root" 2>/dev/null || true
 cp /tmp/dhcp.leases "$DIR/dhcp.leases" 2>/dev/null || true
 
+# KotiKey (podkop main — единственный разрешённый outbound)
+KOTI="/mnt/usb/backups/koty-k-kotikey"
+if [ -d "$KOTI" ]; then
+	cp -a "$KOTI" "$DIR/koti-k-kotikey"
+	logger -t tr-backup "kotikey ok"
+else
+	echo "WARNING: $KOTI missing (USB?)" >"$DIR/KOTIKEY-MISSING.txt"
+fi
+[ -d /mnt/usb/backups ] && ls -la /mnt/usb/backups >"$DIR/usb-backups-ls.txt" 2>&1 || true
+
+backup podkop-main-out-now.txt sh -c 'wget -qO- --timeout=3 http://127.0.0.1:9090/proxies/main-out 2>/dev/null | head -c 4000'
+backup podkop-urltest-links.txt sh -c 'uci get podkop.main.urltest_proxy_links 2>/dev/null; uci get podkop.main.proxy_config_type 2>/dev/null'
+
+mkdir -p "$DIR/sysctl.d"
+cp /etc/sysctl.d/99-*.conf "$DIR/sysctl.d/" 2>/dev/null || true
+
+cat >"$DIR/RESTORE-README.txt" << 'EOF'
+TR3000 backup bundle. Restore: tr3000-restore-from-backup.sh from cursor-cloud repo.
+Podkop outbound: KotiKey ONLY (koti-k-kotikey/). No VPS in podkop.main.
+EOF
+
 backup nft-ruleset.txt nft list ruleset
 backup ip-rule.txt ip rule
 backup ip-route-main.txt ip route

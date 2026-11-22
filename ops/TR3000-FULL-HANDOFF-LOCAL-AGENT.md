@@ -219,6 +219,8 @@ https://raw.githubusercontent.com/zn99hv52cr-sketch/cursor-cloud/cursor/fi-vps-o
 
 ## 10. Полный бэкап (сначала сделай это)
 
+Архива «с диска роутера» у cloud agent **нет** — его нужно **создать на Cudy**. В tarball входит **`koti-k-kotikey/`** с USB (subscription links для podkop).
+
 На роутере (Termius `root@Cudy`):
 
 ```sh
@@ -229,6 +231,14 @@ wget -qO- "https://raw.githubusercontent.com/zn99hv52cr-sketch/cursor-cloud/curs
 
 ```sh
 scp root@192.168.2.1:/tmp/tr3000-backup-*.tar.gz .
+```
+
+Восстановление: `ops/scripts/tr3000-restore-from-backup.sh` — см. `ops/backups/TR3000-RESTORE-README.md`.
+
+**В Telegram бота** (FI VPS, токен в `/opt/vpn-bot/.env`):
+
+```sh
+CHAT_ID=186409737 /path/tr3000-send-backup-telegram.sh /tmp/tr3000-backup-*.tar.gz
 ```
 
 Или через Tailscale:
