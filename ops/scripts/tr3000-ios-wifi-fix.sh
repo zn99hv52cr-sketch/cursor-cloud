@@ -107,6 +107,7 @@ echo "route fakeip from iPhone IP $IPHONE_IP:"
 ip route get 198.18.0.26 from "$IPHONE_IP" iif br-lan 2>/dev/null | head -1
 nft list chain inet PodkopTable mangle 2>/dev/null | grep counter | head -2
 echo ""
-echo "iPhone: WiFi forget+reconnect; DNS manual $LAN; VPN profiles OFF (Happ/Outline)."
-echo "Settings -> VPN: must be Not Connected."
+echo "iPhone: WiFi forget+reconnect; DNS manual $LAN only."
+echo "NOT in Settings->VPN: iCloud -> Private Relay OFF (iOS treats it like VPN)."
+echo "Settings -> Wi-Fi -> (i) -> Limit IP Address Tracking OFF (test)."
 logger -t tr-ios-wifi "done"
