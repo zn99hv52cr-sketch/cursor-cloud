@@ -63,7 +63,8 @@ save live/logread-tail.txt sh -c 'logread | tail -300'
 YT=$(curl -4 -sS -m10 -o /dev/null -w '%{http_code}' https://www.youtube.com/generate_204 2>/dev/null || echo fail)
 IG=$(curl -4 -sS -m12 -o /dev/null -w '%{http_code}' https://www.instagram.com/ 2>/dev/null || echo fail)
 TG=$(curl -4 -sS -m10 -o /dev/null -w '%{http_code}' https://web.telegram.org/ 2>/dev/null || echo fail)
-NOW=$(wget -qO- --timeout=4 http://192.168.2.1:9090/proxies/main-out 2>/dev/null | grep -o '"now": *"[^"]*"' | head -1)
+NOW=$(wget -qO- --timeout=4 http://192.168.2.1:9090/proxies/main-out 2>/dev/null \
+	| grep -o '"now": *"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
 
 cat >"$DIR/HEALTH.txt" << EOF
 TR3000 snapshot $STAMP (router local time: $(date))
