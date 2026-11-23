@@ -13,12 +13,12 @@ ip route flush table 164 2>/dev/null || true
 
 # Широкие CDN-подсети в user_subnets гоняют 179.43.x (в т.ч. hdrezka.ag) в VPN — убрать.
 for c in 179.43.0.0/16 82.221.0.0/16 195.154.239.0/24 185.231.220.9/32; do
-	while uci del_list podkop.main.user_subnets="$c" 2>/dev/null; do :; done
+	uci del_list podkop.main.user_subnets="$c" 2>/dev/null || true
 done
 
-DIRECT_DNS="hdrezka.ag rezka.ag hdrezka.me hdrzk.org hdrezka-home.tv hdrezka.ac voidboost.cc voidboost.net voidboost.com stream.voidboost.cc"
+DIRECT_DNS="hdrezka.ag rezka.ag hdrezka.me hdrzk.org hdrezka-home.tv hdrezka.ac"
 for d in $DIRECT_DNS; do
-	while uci del_list podkop.main.user_domains="$d" 2>/dev/null; do :; done
+	uci del_list podkop.main.user_domains="$d" 2>/dev/null || true
 	uci get dhcp.@dnsmasq[0].server 2>/dev/null | grep -q "/${d}/77.88.8.8" \
 		|| uci add_list dhcp.@dnsmasq[0].server="/${d}/77.88.8.8"
 done
