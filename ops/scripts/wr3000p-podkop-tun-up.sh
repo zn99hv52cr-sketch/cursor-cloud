@@ -149,7 +149,8 @@ if any(.outbounds[]; .tag=="direct-out") then . else .outbounds += [{"type":"dir
 
 typ=$(jq -r '.inbounds[]|select(.tag=="tproxy-in")|.type' "$CFG" 2>/dev/null)
 if [ "$typ" = "tun" ] && pidof sing-box >/dev/null && ip link show sbtun >/dev/null 2>&1 \
-	&& ip route show 198.20.0.0/15 2>/dev/null | grep -q 'dev sbtun'; then
+	&& ip route show 198.20.0.0/15 2>/dev/null | grep -q 'dev sbtun' \
+	&& ip route show table podkop 2>/dev/null | grep -q 'default dev sbtun'; then
 	nft list chain inet fw4 mangle_postrouting 2>/dev/null | grep -q sbtun-mss || \
 		nft insert rule inet fw4 mangle_postrouting oifname "sbtun" tcp flags syn tcp option maxseg size set 1360 comment "sbtun-mss"
 	nft list chain inet fw4 forward 2>/dev/null | grep -q sbtun-out || \

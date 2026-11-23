@@ -1,6 +1,8 @@
 #!/bin/sh
 # WR3000P: pin KotiKey node when YouTube + Telegram work (main-3 often best for TG).
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
+exec 9>/var/lock/podkop-tg-pick.lock
+flock -n 9 || exit 0
 API=http://127.0.0.1:9090/proxies/main-out
 AUTH="Authorization: Bearer diag9090wr"
 ok() {
