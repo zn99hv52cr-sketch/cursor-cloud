@@ -104,6 +104,10 @@ if any(.outbounds[]; .tag=="block") then . else .outbounds += [{"type":"block","
 if any(.outbounds[]; .tag=="direct-out") then . else .outbounds += [{"type":"direct","tag":"direct-out"}] end
 |
 (.outbounds[] | select(.type=="vless" and (.tls.reality.enabled? == true))) |= del(.transport)
+|
+(.outbounds[] | select(.tag=="main-out" and .type=="selector")) |= (
+  .outbounds |= map(select(. != "main-urltest-out"))
+)
 '
 
 sharp_jq='
@@ -152,7 +156,8 @@ if [ "$typ" = "tun" ] && pidof sing-box >/dev/null && ip link show sbtun >/dev/n
 		nft insert rule inet fw4 forward iifname "br-lan" oifname "sbtun" accept comment "sbtun-out"
 	nft list chain inet fw4 forward 2>/dev/null | grep -q sbtun-in || \
 		nft insert rule inet fw4 forward iifname "sbtun" oifname "br-lan" accept comment "sbtun-in"
-	finish_hooks
+		finish_hooks
+	/usr/bin/wr3000p-kotikey-lock-selector.sh 2>/dev/null || true
 	logger -t podkop-tun "sbtun fast-path routes=$(ip route | grep -c 'dev sbtun')"
 	exit 0
 fi
@@ -194,4 +199,5 @@ nft list chain inet fw4 mangle_postrouting 2>/dev/null | grep -q sbtun-mss || \
 	nft insert rule inet fw4 mangle_postrouting oifname "sbtun" tcp flags syn tcp option maxseg size set 1360 comment "sbtun-mss"
 
 finish_hooks
+/usr/bin/wr3000p-kotikey-lock-selector.sh 2>/dev/null || true
 logger -t podkop-tun "sbtun routes=$(ip route | grep -c 'dev sbtun') mode=$PROXY_CFG"

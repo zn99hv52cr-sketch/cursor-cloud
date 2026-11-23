@@ -30,7 +30,7 @@ if RAW="$(curl -4 -k -m30 -sS \
 	"$URL" 2>/dev/null)" && [ -n "$RAW" ]; then
 	printf '%s' "$RAW" > /tmp/koti.b64
 	DEC="$(base64 -d /tmp/koti.b64 2>/dev/null || printf '%s' "$RAW" | base64 -d 2>/dev/null)"
-	printf '%s\n' "$DEC" | grep '^vless://' | grep -v digitalbase.site > "$LINKS"
+	printf '%s\n' "$DEC" | grep '^vless://' | grep -vE 'digitalbase|assetflow|chatbaza|rtnode|keenetic' > "$LINKS"
 	if [ -s "$LINKS" ]; then
 		head -8 "$LINKS" > "${LINKS}.tmp" && mv "${LINKS}.tmp" "$LINKS"
 		echo "OK v2raytun/ios+hwid -> $LINKS ($(wc -l <"$LINKS") links)"
