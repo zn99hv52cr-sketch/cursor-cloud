@@ -14,6 +14,5 @@ sing-box check -c /tmp/sb-lock.json >/dev/null 2>&1 || exit 0
 mv /tmp/sb-lock.json "$CFG"
 cp -a "$CFG" "$OK"
 if pidof sing-box >/dev/null 2>&1; then
-	killall -HUP sing-box 2>/dev/null || /etc/init.d/sing-box restart >/dev/null 2>&1 || true
+	killall -HUP sing-box 2>/dev/null || true
 fi
-[ -x /usr/bin/podkop-tg-pick.sh ] && /usr/bin/podkop-tg-pick.sh || true
