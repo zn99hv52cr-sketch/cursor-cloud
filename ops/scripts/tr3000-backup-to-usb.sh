@@ -35,12 +35,14 @@ for f in /usr/bin/podkop-tun-up /usr/bin/podkop-restore-mangle.sh \
 	/usr/bin/podkop-restore-table.sh /usr/bin/podkop-guard.sh \
 	/usr/bin/podkop-tg-pick.sh /usr/bin/tr3000-boot-stable.sh \
 	/usr/bin/tr3000-wan-recover /usr/bin/tr3000-singbox-route-fix.sh \
-	/usr/bin/tr3000-tailnet-pin.sh /usr/bin/tr3000-tailscale-watchdog.sh; do
+	/usr/bin/tr3000-tailnet-pin.sh /usr/bin/tr3000-tailscale-watchdog.sh \
+	/usr/bin/tr3000-tailscale-boot.sh; do
 	[ -f "$f" ] && cp "$f" "$DIR/usr-bin/" 2>/dev/null || true
 done
 
 mkdir -p "$DIR/init.d"
-for f in /etc/init.d/tailnet-pin /etc/init.d/tailscale-no-ssh /etc/init.d/usb-data-mount; do
+for f in /etc/init.d/tailnet-pin /etc/init.d/tailscale-after-tunnel \
+	/etc/init.d/tailscale-no-ssh /etc/init.d/usb-data-mount; do
 	[ -f "$f" ] && cp "$f" "$DIR/init.d/" 2>/dev/null || true
 done
 ls /etc/rc.d/ >"$DIR/init.d/rc.d-listing.txt" 2>/dev/null || true
@@ -108,6 +110,8 @@ Rules that must survive any restore:
     last seen N min ago", disco pings still answer and every TCP session hangs.
   * tr3000-tailscale-watchdog.sh in cron (every 5 min) restarts tailscaled when
     that freeze happens anyway, so remote access repairs itself unattended.
+  * S99tailscale-after-tunnel runs /usr/bin/tr3000-tailscale-boot.sh after podkop
+    at boot (tailscaled alone starts at S80, too early). Also on podkop-tun-up.
   * The sing-box controller binds 192.168.2.1:9090 only. Scripts must not call
     127.0.0.1:9090 — it is refused, and node pinning then silently fails.
 EOF
