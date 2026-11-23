@@ -1,0 +1,12 @@
+# TR3000 — фото WhatsApp частично
+
+Все PoP `media-*-cdn.whatsapp.net` с TR по TCP отвечают 404. Часть фоток на телефоне всё равно падает:
+
+- крупные файлы Telegram: MSS на sbtun **1360** (1120 резал скорость с LAN примерно вдвое). TCP rmem/wmem 4 МБ, `tcp_slow_start_after_idle=0` в `/etc/sysctl.d/99-vpn-bulk.conf`
+- нода **main-1-out**: web.telegram.org 200 и файл ~4–6 МБ/с. main-5 открывает DC, но ломает TLS (YouTube тоже). Не переключать.
+- доп. сети Meta в sbtun (`57.141.0.0/19`, `129.134.0.0/16`, `69.63.176.0/20`, …)
+- QUIC с LAN reject, DoH/DoT в WAN reject
+
+iPhone `192.168.2.195` держит кучу сессий на `147.125.132.43` (Happ). Пока Happ включён, часть WA уходит в эту ноду и рвётся.
+
+Проверка: hel3/ams/fra 404, TG 200, YT 204.

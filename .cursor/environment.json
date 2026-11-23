@@ -1,0 +1,4 @@
+{
+  "install": "bash ops/scripts/cloud-agent-env-install.sh",
+  "start": "bash .cursor/start-tailscale.sh"
+}
