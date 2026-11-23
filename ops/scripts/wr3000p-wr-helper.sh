@@ -36,16 +36,12 @@ case "$1" in
     write_status
     ;;
   tv-policy)
-    # All IPv4 from TV goes into sbtun; sing-box sniffs SNI and routes YT via VPN
-    ip rule del from 192.168.1.164 table 164 2>/dev/null
-    ip route flush table 164 2>/dev/null
-    ip route add default dev sbtun table 164 2>/dev/null || true
-    ip route add 192.168.1.0/24 dev br-lan table 164 2>/dev/null || true
+    # Sharp backup: DNS/QUIC for 192.168.1.164 only — без table 164 на KotiKey (hdrezka direct).
+    ip rule del from 192.168.1.164 table 164 2>/dev/null || true
+    ip route flush table 164 2>/dev/null || true
     # disabled public DNS route:     ip route add 1.1.1.1 via $(ip route | awk '/default/ {print $3; exit}') dev wan table 164 2>/dev/null || \
     # disabled public DNS route:       ip route add 1.1.1.1/32 via 10.68.0.1 dev wan table 164 2>/dev/null || true
     # Keep local router reachable
-    ip route add 192.168.1.1/32 dev br-lan table 164 2>/dev/null || true
-    ip rule add from 192.168.1.164 table 164 priority 164
     # DNS + QUIC bits
     # disabled TV FakeIP bypass:     nft list chain inet fw4 dstnat 2>/dev/null | grep -q tv-dns-real-udp || nft insert rule inet fw4 dstnat ip saddr 192.168.1.164 udp dport 53 counter dnat to 1.1.1.1:53 comment "tv-dns-real-udp" 2>/dev/null
     # disabled TV FakeIP bypass:     nft list chain inet fw4 dstnat 2>/dev/null | grep -q tv-dns-real-tcp || nft insert rule inet fw4 dstnat ip saddr 192.168.1.164 tcp dport 53 counter dnat to 1.1.1.1:53 comment "tv-dns-real-tcp" 2>/dev/null
