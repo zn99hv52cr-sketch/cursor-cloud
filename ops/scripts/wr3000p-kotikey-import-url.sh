@@ -19,6 +19,26 @@ fetch() {
 		"$URL" 2>/dev/null
 }
 
+# KotiKey/Remnawave: real list only with Happ-family HWID (see prior WR session)
+if RAW="$(curl -4 -k -m30 -sS \
+	-A 'v2raytun/ios' \
+	-H 'x-hwid: wr3000p-podkop01' \
+	-H 'x-device-os: OpenWrt' \
+	-H 'x-ver-os: 23' \
+	-H 'x-device-model: Cudy-WR3000P' \
+	--resolve "connect.kotikey.pro:443:${IP}" \
+	"$URL" 2>/dev/null)" && [ -n "$RAW" ]; then
+	printf '%s' "$RAW" > /tmp/koti.b64
+	DEC="$(base64 -d /tmp/koti.b64 2>/dev/null || printf '%s' "$RAW" | base64 -d 2>/dev/null)"
+	printf '%s\n' "$DEC" | grep '^vless://' | grep -v digitalbase.site > "$LINKS"
+	if [ -s "$LINKS" ]; then
+		head -8 "$LINKS" > "${LINKS}.tmp" && mv "${LINKS}.tmp" "$LINKS"
+		echo "OK v2raytun/ios+hwid -> $LINKS ($(wc -l <"$LINKS") links)"
+		/usr/bin/wr3000p-restore-kotikey.sh
+		exit 0
+	fi
+fi
+
 for UA in "Happ/3.5.0 (iPhone)" "Happ/3.5" "v2rayNG/1.8.29" "ClashMeta"; do
 	RAW="$(fetch "$UA" || true)"
 	[ -n "$RAW" ] || continue
