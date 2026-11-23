@@ -1,0 +1,151 @@
+{
+	# UDP/443 is AmneziaWG (iptables REDIRECT). Never advertise HTTP/3/QUIC.
+	servers {
+		protocols h1 h2
+	}
+}
+
+vpn2.sharpmaind.ru {
+	header -Alt-Svc
+	header -alt-svc
+	bind 185.141.217.43
+	handle /xh* {
+		reverse_proxy http://127.0.0.1:10445 {
+			flush_interval -1
+			transport http {
+				versions 1.1
+			}
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /vpngrpc* {
+		reverse_proxy h2c://127.0.0.1:10444 {
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /xh* {
+		reverse_proxy http://127.0.0.1:10445 {
+			flush_interval -1
+			transport http {
+				versions 1.1
+			}
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /vpngrpc* {
+		reverse_proxy h2c://127.0.0.1:10444 {
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /xh* {
+		reverse_proxy http://127.0.0.1:10445 {
+			flush_interval -1
+			transport http {
+				versions 1.1
+			}
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /vpn* {
+		reverse_proxy http://127.0.0.1:10443 {
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /api/* {
+		reverse_proxy http://127.0.0.1:3000
+	}
+	handle /mtpanel* {
+		basic_auth {
+			andrei $2a$14$lIlfHtUf6AoRlSGZwctIOececVSHzvuBNRWOr7jHhmx8DaWdRg2Fq
+		}
+		reverse_proxy 127.0.0.1:8088 {
+			header_up Host {host}
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	handle {
+		basic_auth {
+			andrei $2a$14$lIlfHtUf6AoRlSGZwctIOececVSHzvuBNRWOr7jHhmx8DaWdRg2Fq
+		}
+		reverse_proxy http://127.0.0.1:3000
+	}
+}
+
+awg.sharpmaind.ru {
+	header -Alt-Svc
+	header -alt-svc
+	bind 185.141.217.43
+	handle_path /dl/* {
+		basic_auth {
+			andrei $2a$14$lIlfHtUf6AoRlSGZwctIOececVSHzvuBNRWOr7jHhmx8DaWdRg2Fq
+		}
+		root * /opt/awg-downloads
+		file_server
+	}
+	handle {
+		basic_auth {
+			andrei $2a$14$lIlfHtUf6AoRlSGZwctIOececVSHzvuBNRWOr7jHhmx8DaWdRg2Fq
+		}
+		reverse_proxy 127.0.0.1:5000 {
+			header_up Host {host}
+			header_up X-Forwarded-Proto https
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
+
+kuma.sharpmaind.ru {
+	header -Alt-Svc
+	header -alt-svc
+	bind 185.141.217.43
+	reverse_proxy 127.0.0.1:3002
+}
+
+home.sharpmaind.ru {
+	handle /xh* {
+		reverse_proxy http://127.0.0.1:10445 {
+			flush_interval -1
+			transport http {
+				versions 1.1
+			}
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+
+	handle /vpngrpc* {
+		reverse_proxy h2c://127.0.0.1:10444 {
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	header -Alt-Svc
+	header -alt-svc
+	bind 185.141.217.43
+	tls internal
+	handle /api/* {
+		reverse_proxy http://127.0.0.1:3000 {
+			header_up X-Forwarded-Proto https
+		}
+	}
+	handle /vpn* {
+		reverse_proxy http://127.0.0.1:10443 {
+			flush_interval -1
+			transport http {
+				versions 1.1
+			}
+			header_up Host vpn2.sharpmaind.ru
+			header_up X-Forwarded-Proto https
+		}
+	}
+}
