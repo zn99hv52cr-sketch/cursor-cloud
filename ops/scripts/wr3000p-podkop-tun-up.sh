@@ -159,6 +159,7 @@ if [ "$typ" = "tun" ] && pidof sing-box >/dev/null && ip link show sbtun >/dev/n
 		nft insert rule inet fw4 forward iifname "sbtun" oifname "br-lan" accept comment "sbtun-in"
 		finish_hooks
 	/usr/bin/wr3000p-kotikey-lock-selector.sh 2>/dev/null || true
+	[ -x /usr/bin/wr3000p-pin-main-out.sh ] && /usr/bin/wr3000p-pin-main-out.sh 2>/dev/null || true
 	logger -t podkop-tun "sbtun fast-path routes=$(ip route | grep -c 'dev sbtun')"
 	exit 0
 fi
@@ -201,4 +202,5 @@ nft list chain inet fw4 mangle_postrouting 2>/dev/null | grep -q sbtun-mss || \
 
 finish_hooks
 /usr/bin/wr3000p-kotikey-lock-selector.sh 2>/dev/null || true
+[ -x /usr/bin/wr3000p-pin-main-out.sh ] && /usr/bin/wr3000p-pin-main-out.sh 2>/dev/null || true
 logger -t podkop-tun "sbtun routes=$(ip route | grep -c 'dev sbtun') mode=$PROXY_CFG"

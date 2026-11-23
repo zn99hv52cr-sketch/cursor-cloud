@@ -14,6 +14,8 @@ pin() {
 	wget -qO- --timeout=4 --method=PUT --header="$AUTH" --header="Content-Type: application/json" \
 		--body-data="{\"name\":\"$1\"}" "$API" >/dev/null 2>&1 || true
 }
+PIN=$(cat /root/kotikey-pinned-main-out 2>/dev/null)
+[ -n "$PIN" ] && pin "$PIN" && sleep 2 && ok && exit 0
 for n in 1 3 4 2 5 6 7 8; do
 	pin "main-${n}-out"
 	sleep 2
