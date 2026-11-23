@@ -41,7 +41,7 @@ for f in /usr/bin/podkop-tun-up /usr/bin/podkop-restore-mangle.sh \
 done
 
 mkdir -p "$DIR/init.d"
-for f in /etc/init.d/tailnet-pin /etc/init.d/tailscale-after-tunnel \
+for f in /etc/init.d/tailnet-pin /etc/init.d/tailscale-first \
 	/etc/init.d/tailscale-no-ssh /etc/init.d/usb-data-mount; do
 	[ -f "$f" ] && cp "$f" "$DIR/init.d/" 2>/dev/null || true
 done
@@ -102,16 +102,15 @@ Rules that must survive any restore:
   * Table podkop needs "default dev sbtun" + 198.18.0.0/15, else blocked sites
     resolve to fakeip and then time out.
   * Do NOT run tailscale up --ssh. Remote access is dropbear :2222.
-  * tr3000-tailnet-pin.sh must stay in cron (every minute), in /etc/init.d via
-    S98tailnet-pin, and as the last line of /usr/bin/podkop-tun-up. Without its
-    "meta mark and 0xff0000 == 0x80000 return" rule in PodkopTable, tailscaled's
-    own control-plane and DERP sockets get marked for the podkop table, resolve
-    through fakeip and die on every sing-box restart: peers then show "offline,
-    last seen N min ago", disco pings still answer and every TCP session hangs.
+  * tr3000-tailnet-pin.sh must stay in cron (every minute), S81tailscale-first at
+    boot, and on podkop-tun-up. It inserts "meta mark and 0xff0000 == 0x80000
+    return" and tailnet returns so remote access works even when sing-box is down.
   * tr3000-tailscale-watchdog.sh in cron (every 5 min) restarts tailscaled when
     that freeze happens anyway, so remote access repairs itself unattended.
-  * S99tailscale-after-tunnel runs /usr/bin/tr3000-tailscale-boot.sh after podkop
-    at boot (tailscaled alone starts at S80, too early). Also on podkop-tun-up.
+  * S81tailscale-first runs /usr/bin/tr3000-tailscale-boot.sh right after tailscaled
+    (S80), before podkop (S99). podkop-tun-up only re-runs tailnet-pin so nft
+    bypass rules stay in place when the tunnel appears — it does not restart
+    tailscaled or require sing-box.
   * The sing-box controller binds 192.168.2.1:9090 only. Scripts must not call
     127.0.0.1:9090 — it is refused, and node pinning then silently fails.
 EOF

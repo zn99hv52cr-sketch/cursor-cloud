@@ -49,15 +49,7 @@ if [ $((NOW - LAST)) -lt "$COOLDOWN" ]; then
 fi
 echo "$NOW" >"$STAMP"
 
-# The tunnel carries tailscale's control plane on this ISP, so make sure it is
-# up before asking tailscaled to re-dial.
-pidof sing-box >/dev/null 2>&1 || {
-	log "sing-box down, starting podkop first"
-	/usr/bin/podkop start >/dev/null 2>&1
-	sleep 20
-}
-[ "$(ip route show table podkop 2>/dev/null | wc -l)" -lt 3 ] && /usr/bin/podkop-restore-table.sh
-
+# Do not touch podkop — remote access must revive with the VPN down.
 tailscale debug prefs >/root/tailscale-prefs-before.json 2>/dev/null
 log "restarting tailscaled"
 /etc/init.d/tailscale restart >/dev/null 2>&1
