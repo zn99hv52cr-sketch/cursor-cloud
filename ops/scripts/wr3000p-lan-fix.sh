@@ -10,6 +10,8 @@ logger -t wr-lan-fix "start"
 
 curl -fsSL "$BASE/wr3000p-podkop-restore-mangle.sh" -o /usr/bin/podkop-restore-mangle.sh && chmod +x /usr/bin/podkop-restore-mangle.sh
 grep -q podkop-restore-mangle /usr/bin/podkop-tun-up 2>/dev/null || echo '/usr/bin/podkop-restore-mangle.sh' >> /usr/bin/podkop-tun-up
+grep -q wr3000p-podkop-route-fix /usr/bin/podkop-tun-up 2>/dev/null || echo '/usr/bin/wr3000p-podkop-route-fix.sh' >> /usr/bin/podkop-tun-up
+[ -x /usr/bin/wr3000p-restore-kotikey.sh ] && /usr/bin/wr3000p-restore-kotikey.sh 2>/dev/null || true
 
 uci -q delete dhcp.@dnsmasq[0].server 2>/dev/null || true
 uci add_list dhcp.@dnsmasq[0].server='127.0.0.42#53'
