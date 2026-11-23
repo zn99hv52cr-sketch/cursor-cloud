@@ -64,4 +64,13 @@ nslookup chatgpt.com 127.0.0.1
 
 ## Доступ агента
 
-Cloud Agent: `tailscale ssh root@100.81.160.52` — один раз подтвердить ссылку `https://login.tailscale.com/a/...` в аккаунте sharpmaind. Без этого правки на роутере делаются с вашего ПК или через LuCI → Podkop.
+**Рабочий путь (облако, без браузера):** dropbear на **порту 2222**, ключ `wr3000p_ed25519` — Tailscale **не** перехватывает этот порт.
+
+```bash
+ssh -p 2222 -i ~/.ssh/wr3000p_ed25519 root@100.81.160.52
+# или: ssh tr3000   # если в ~/.ssh/config Port 2222
+```
+
+**Не использовать для агента:** `root@100.81.160.52` без `-p 2222` и `tailscale ssh` — на **22** включён Tailscale SSH (`RunSSH: true`): требуется разовый клик `https://login.tailscale.com/a/...`, облако само не подтвердит.
+
+Исторически (октябрь): `tailscale up --auth-key=... --hostname=cursor-agent --accept-routes=false --ssh` + `tailscale ssh root@100.81.160.52` после вашего подтверждения `/a/...`. Сейчас на TR снова `RunSSH: true` после ребута — оставлен обход через **2222**.
