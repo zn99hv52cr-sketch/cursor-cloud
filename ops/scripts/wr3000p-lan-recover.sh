@@ -15,6 +15,8 @@ fetch wr3000p-hdrezka-video-vpn.sh wr3000p-hdrezka-video-vpn.sh
 fetch wr3000p-podkop-tun-up.sh podkop-tun-up
 fetch wr3000p-podkop-route-fix.sh wr3000p-podkop-route-fix.sh
 fetch wr3000p-emergency-up.sh wr3000p-emergency-up.sh
+fetch wr3000p-antidrift.sh wr3000p-antidrift.sh
+fetch wr3000p-list-update-guard.sh wr3000p-list-update-guard.sh
 
 if [ -s /overlay/backups/sing-box-config.ok.json ] && [ ! -s /etc/sing-box/config.json ]; then
 	cp /overlay/backups/sing-box-config.ok.json /etc/sing-box/config.json

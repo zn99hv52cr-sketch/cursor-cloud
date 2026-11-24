@@ -46,6 +46,7 @@ for API in "$API_LOCAL" "$API_LAN"; do
 	wget -qO- --timeout=5 --method=PUT --header="$AUTH" --header="Content-Type: application/json" \
 		--body-data="{\"name\":\"$PIN\"}" "$API" >/dev/null 2>&1 && break
 done
+export KOTIKEY_FAILOVER=0
 [ -x /usr/bin/podkop-tg-pick.sh ] && /usr/bin/podkop-tg-pick.sh >>"$LOG" 2>&1
 
 logger -t wr-boot-stable "done pin=$PIN sing-box=$(pidof sing-box | wc -l) sbtun=$(ip link show sbtun 2>/dev/null | wc -l)"

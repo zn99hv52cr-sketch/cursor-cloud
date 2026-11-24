@@ -12,13 +12,18 @@ if [ -x /usr/bin/wr3000p-boot-stable.sh ] && [ -f /etc/rc.local ]; then
 	}
 fi
 
-# Раз в 10 мин — pin-guard, не каждые 2 мин перебор нод.
+# Cron: antidrift каждые 5 мин; list_update только через guard; без старого tg-pick */2.
 CR=/etc/crontabs/root
-grep -v podkop-tg-pick "$CR" 2>/dev/null > /tmp/cr.new || : > /tmp/cr.new
-grep -q wr3000p-stable-apply /tmp/cr.new || echo '*/10 * * * * /usr/bin/wr3000p-stable-apply.sh quick' >> /tmp/cr.new
+{
+	grep -v -E 'podkop-tg-pick|podkop list_update|wr3000p-stable-apply|wr3000p-antidrift|wr3000p-list-update-guard' "$CR" 2>/dev/null || true
+	echo '*/5 * * * * /usr/bin/wr3000p-antidrift.sh'
+	echo '13 9 * * * /usr/bin/wr3000p-list-update-guard.sh'
+	echo '0 4 * * 0 /usr/bin/wr3000p-stable-apply.sh'
+} > /tmp/cr.new
 mv /tmp/cr.new "$CR"
 /etc/init.d/cron enable 2>/dev/null
 /etc/init.d/cron restart 2>/dev/null
+rm -f /root/kotikey-allow-failover 2>/dev/null
 
 [ "$1" = quick ] && {
 	[ -x /usr/bin/wr3000p-pin-main-out.sh ] && /usr/bin/wr3000p-pin-main-out.sh "$PIN"
