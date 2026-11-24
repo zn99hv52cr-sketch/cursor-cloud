@@ -34,12 +34,7 @@ uci commit podkop
 /etc/init.d/dnsmasq restart
 sleep 2
 
-DIRECT_RULE='{"domain_suffix":["hdrezka.ag","rezka.ag","hdrezka.me","hdrzk.org","hdrezka-home.tv","hdrezka.ac","voidboost.cc","voidboost.net","voidboost.com","stream.voidboost.cc"],"outbound":"direct-out"}'
-if [ -s "$CFG" ] && command -v jq >/dev/null 2>&1; then
-	jq --argjson dr "$DIRECT_RULE" '.route.rules |= [$dr] + (.route.rules | map(select(.domain_suffix != $dr.domain_suffix)))' "$CFG" > /tmp/sb-hk.json
-	sing-box check -c /tmp/sb-hk.json && cp /tmp/sb-hk.json "$CFG" && cp "$CFG" "$OK"
-	killall -HUP sing-box 2>/dev/null || true
-fi
+# Podkop 2.x: split на dnsmasq + user_domains; legacy domain_suffix в route.rules не трогаем.
 
 # nft podkop_subnets: обновить без restart podkop (только user subnets)
 [ -x /usr/bin/podkop ] && timeout 25 /usr/bin/podkop list_update >/tmp/hk-lu.log 2>&1 || true

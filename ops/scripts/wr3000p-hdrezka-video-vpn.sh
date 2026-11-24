@@ -9,17 +9,12 @@ VOID_DOMAINS='voidboost.cc voidboost.net voidboost.com stream.voidboost.cc'
 
 for d in $VOID_DOMAINS; do
 	uci del_list dhcp.@dnsmasq[0].server="/${d}/77.88.8.8" 2>/dev/null || true
-	uci get dhcp.@dnsmasq[0].server 2>/dev/null | grep -q "/${d}/127.0.0.42" \
-		|| uci add_list dhcp.@dnsmasq[0].server="/${d}/127.0.0.42#53"
+	uci del_list dhcp.@dnsmasq[0].server="/${d}/127.0.0.42#53" 2>/dev/null || true
+	uci get dhcp.@dnsmasq[0].server 2>/dev/null | tr " " "\n" | grep -Fx "/${d}/127.0.0.42" >/dev/null \
+		|| uci add_list dhcp.@dnsmasq[0].server="/${d}/127.0.0.42"
 	uci get podkop.main.user_domains 2>/dev/null | tr " " "\n" | grep -Fx "$d" >/dev/null \
 		|| uci add_list podkop.main.user_domains="$d"
 done
-
-jq '.route.rules |= [{"domain_suffix":["hdrezka.ag","rezka.ag","hdrezka.me","hdrzk.org","hdrezka-home.tv","hdrezka.ac"],"outbound":"direct-out"}] + [.route.rules[] | select(.domain_suffix? | if . then (. | index("voidboost.cc") | not) else true end)]' "$CFG" > /tmp/sb-vid.json
-sing-box check -c /tmp/sb-vid.json
-cp /tmp/sb-vid.json "$CFG"
-cp "$CFG" "$OK"
-killall -HUP sing-box 2>/dev/null || true
 
 uci commit podkop
 uci commit dhcp
