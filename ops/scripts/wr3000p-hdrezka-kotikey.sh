@@ -17,6 +17,7 @@ for c in 179.43.0.0/16 82.221.0.0/16 195.154.239.0/24 185.231.220.9/32; do
 done
 
 DIRECT_DNS="hdrezka.ag rezka.ag hdrezka.me hdrzk.org hdrezka-home.tv hdrezka.ac"
+uci del_list podkop.main.user_domains=voidcrystal.org 2>/dev/null || true
 for d in $DIRECT_DNS; do
 	uci del_list podkop.main.user_domains="$d" 2>/dev/null || true
 	uci get dhcp.@dnsmasq[0].server 2>/dev/null | grep -q "/${d}/77.88.8.8" \

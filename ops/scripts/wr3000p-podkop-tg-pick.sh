@@ -1,25 +1,22 @@
 #!/bin/sh
-# WR3000P: keep main-out on a node where YouTube + Telegram work (via Clash delay, not WAN curl).
+# WR3000P: только удерживаем закреплённую KotiKey-ноду (без перебора каждые 2 мин).
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 exec 9>/var/lock/podkop-tg-pick.lock
 flock -n 9 || exit 0
 API=http://127.0.0.1:9090/proxies/main-out
 AUTH="Authorization: Bearer diag9090wr"
-MAX_MS=8500
+MAX_MS=9000
 
-delay_ms() {
+PIN=$(cat /root/kotikey-pinned-main-out 2>/dev/null)
+[ -n "$PIN" ] || PIN="main-4-out"
+
+delay_ok() {
 	tag=$1
 	url=$2
-	resp=$(wget -qO- --timeout=18 --header="$AUTH" \
+	resp=$(wget -qO- --timeout=16 --header="$AUTH" \
 		"http://127.0.0.1:9090/proxies/${tag}/delay?timeout=8000&url=${url}" 2>/dev/null) || return 1
-	echo "$resp" | grep -o '"delay":[0-9]*' | head -1 | sed 's/"delay"://'
-}
-
-node_ok() {
-	tag=$1
-	yt=$(delay_ms "$tag" 'https%3A%2F%2Fwww.youtube.com%2Fgenerate_204') || return 1
-	tg=$(delay_ms "$tag" 'https%3A%2F%2Fweb.telegram.org%2F') || return 1
-	[ -n "$yt" ] && [ -n "$tg" ] && [ "$yt" -lt "$MAX_MS" ] && [ "$tg" -lt "$MAX_MS" ]
+	ms=$(echo "$resp" | grep -o '"delay":[0-9]*' | head -1 | sed 's/"delay"://')
+	[ -n "$ms" ] && [ "$ms" -lt "$MAX_MS" ]
 }
 
 pin() {
@@ -27,30 +24,30 @@ pin() {
 		--body-data="{\"name\":\"$1\"}" "$API" >/dev/null 2>&1 || true
 }
 
-save_pin() {
-	printf '%s\n' "$1" > /root/kotikey-pinned-main-out
-}
-
-PIN=$(cat /root/kotikey-pinned-main-out 2>/dev/null)
-if [ -n "$PIN" ]; then
+now=$(wget -qO- --timeout=4 --header="$AUTH" "$API" 2>/dev/null \
+	| grep -o '"now":"[^"]*"' | head -1 | sed 's/"now":"//;s/"//')
+if [ "$now" != "$PIN" ]; then
 	pin "$PIN"
+	logger -t podkop-tg-pick "drift ${now:-?} -> $PIN"
 	sleep 1
-	if node_ok "$PIN"; then
-		logger -t podkop-tg-pick "keep $PIN"
-		exit 0
-	fi
-	logger -t podkop-tg-pick "pinned $PIN failed probes"
 fi
 
-for n in 4 3 1 5 6 7 8; do
-	tag="main-${n}-out"
+if delay_ok "$PIN" 'https%3A%2F%2Fwww.youtube.com%2Fgenerate_204' \
+	&& delay_ok "$PIN" 'https%3A%2F%2Fweb.telegram.org%2F'; then
+	exit 0
+fi
+
+logger -t podkop-tg-pick "pinned $PIN weak — failover (no main-2)"
+for tag in main-4-out main-3-out main-1-out main-5-out main-6-out main-7-out main-8-out; do
+	[ "$tag" = "$PIN" ] && continue
 	pin "$tag"
 	sleep 1
-	if node_ok "$tag"; then
-		save_pin "$tag"
-		logger -t podkop-tg-pick "OK $tag"
+	if delay_ok "$tag" 'https%3A%2F%2Fwww.youtube.com%2Fgenerate_204' \
+		&& delay_ok "$tag" 'https%3A%2F%2Fweb.telegram.org%2F'; then
+		printf '%s\n' "$tag" > /root/kotikey-pinned-main-out
+		logger -t podkop-tg-pick "failover -> $tag"
 		exit 0
 	fi
 done
-[ -n "$PIN" ] && pin "$PIN"
+pin "$PIN"
 exit 1
