@@ -6,6 +6,7 @@ flock -n 9 || exit 0
 API=http://127.0.0.1:9090/proxies/main-out
 AUTH="Authorization: Bearer diag9090wr"
 YT='https%3A%2F%2Fwww.youtube.com%2Fgenerate_204'
+KEEP_MS=1200
 MAX_MS=8000
 
 delay_ms() {
@@ -32,7 +33,7 @@ order() {
 PIN=$(cat /root/kotikey-pinned-main-out 2>/dev/null)
 if printf '%s\n' "$ALL" | grep -qx "$PIN"; then
 	ms=$(delay_ms "$PIN")
-	if [ -n "$ms" ] && [ "$ms" -lt "$MAX_MS" ]; then
+	if [ -n "$ms" ] && [ "$ms" -lt "$KEEP_MS" ]; then
 		pin_live "$PIN"
 		exit 0
 	fi
@@ -41,15 +42,17 @@ else
 	logger -t podkop-tg-pick "pinned ${PIN:-empty} not in selector"
 fi
 
-: >/tmp/wr-yt-pick.ok
+rm -f /tmp/wr-yt-best
 order | while read -r tag; do
 	[ -n "$tag" ] || continue
 	ms=$(delay_ms "$tag")
-	if [ -n "$ms" ] && [ "$ms" -lt "$MAX_MS" ]; then
-		pin_live "$tag"
-		echo ok >/tmp/wr-yt-pick.ok
-		exit 0
-	fi
+	[ -n "$ms" ] && [ "$ms" -lt "$MAX_MS" ] && [ "$ms" -lt "$best_ms" ] || continue
+	best=$tag
+	best_ms=$ms
+	printf '%s %s\n' "$best_ms" "$best" > /tmp/wr-yt-best
 done
-[ -s /tmp/wr-yt-pick.ok ] && exit 0
-exit 1
+read -r best_ms best < /tmp/wr-yt-best 2>/dev/null || exit 1
+[ -n "$best" ] || exit 1
+pin_live "$best"
+logger -t podkop-tg-pick "fastest $best ${best_ms}ms"
+exit 0
