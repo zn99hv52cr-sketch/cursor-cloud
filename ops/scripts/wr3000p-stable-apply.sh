@@ -1,8 +1,8 @@
 #!/bin/sh
 # WR3000P: восстановить стабильный KotiKey + HDrezka MiTV (без podkop restart).
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
-PIN="${KOTIKEY_PIN:-main-4-out}"
-printf '%s\n' "$PIN" > /root/kotikey-pinned-main-out
+PIN="${KOTIKEY_PIN:-$(cat /root/kotikey-pinned-main-out 2>/dev/null)}"
+[ -n "$PIN" ] || PIN=main-1-out
 
 # Автозапуск после ребута (rc.local).
 if [ -x /usr/bin/wr3000p-boot-stable.sh ] && [ -f /etc/rc.local ]; then
@@ -26,9 +26,8 @@ mv /tmp/cr.new "$CR"
 rm -f /root/kotikey-allow-failover 2>/dev/null
 
 [ "$1" = quick ] && {
-	[ -x /usr/bin/wr3000p-pin-main-out.sh ] && /usr/bin/wr3000p-pin-main-out.sh "$PIN"
 	/usr/bin/podkop-tg-pick.sh 2>/dev/null || true
-	logger -t wr-stable "quick pin=$PIN"
+	logger -t wr-stable "quick pin=$(cat /root/kotikey-pinned-main-out 2>/dev/null)"
 	exit 0
 }
 

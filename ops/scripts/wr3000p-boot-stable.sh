@@ -1,7 +1,8 @@
 #!/bin/sh
 # WR3000P: поднять KotiKey + HDrezka после ребута (без tailscale restart, без podkop restart если sing-box жив).
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
-PIN="${KOTIKEY_PIN:-main-4-out}"
+PIN="${KOTIKEY_PIN:-$(cat /root/kotikey-pinned-main-out 2>/dev/null)}"
+[ -n "$PIN" ] || PIN=main-1-out
 LOG=/tmp/wr-boot-stable.log
 API_LOCAL="http://127.0.0.1:9090/proxies/main-out"
 API_LAN="http://192.168.1.1:9090/proxies/main-out"

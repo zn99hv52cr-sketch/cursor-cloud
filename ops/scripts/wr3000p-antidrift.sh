@@ -1,13 +1,10 @@
 #!/bin/sh
 # WR3000P: каждые 5 мин — без перебора нод, только pin + lock + HDrezka DNS sanity.
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
-PIN=$(cat /root/kotikey-pinned-main-out 2>/dev/null)
-[ -n "$PIN" ] || PIN=main-4-out
-
 [ -x /usr/bin/wr3000p-kotikey-lock-selector.sh ] && /usr/bin/wr3000p-kotikey-lock-selector.sh 2>/dev/null
-[ -x /usr/bin/wr3000p-pin-main-out.sh ] && /usr/bin/wr3000p-pin-main-out.sh "$PIN" 2>/dev/null
-export KOTIKEY_FAILOVER=0
 [ -x /usr/bin/podkop-tg-pick.sh ] && /usr/bin/podkop-tg-pick.sh 2>/dev/null
+PIN=$(cat /root/kotikey-pinned-main-out 2>/dev/null)
+[ -n "$PIN" ] && [ -x /usr/bin/wr3000p-pin-main-out.sh ] && /usr/bin/wr3000p-pin-main-out.sh "$PIN" 2>/dev/null
 
 # sbtun пропал после ребута WAN — лёгкий tun-up (без podkop restart).
 if ! ip link show sbtun >/dev/null 2>&1 || ! ip route show 198.20.0.0/15 2>/dev/null | grep -q 'dev sbtun'; then
