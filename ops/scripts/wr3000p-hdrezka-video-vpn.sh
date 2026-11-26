@@ -20,7 +20,7 @@ uci commit podkop
 uci commit dhcp
 /etc/init.d/dnsmasq restart
 sleep 2
-timeout 25 /usr/bin/podkop list_update 2>/dev/null || true
+# Не podkop list_update — может сбить main-out/selector; nft обновит antidrift/list_update-guard.
 
 echo "API hdrzk.org:"; nslookup hdrzk.org 192.168.1.1 2>/dev/null | tail -2
 echo "Video voidboost.cc:"; nslookup voidboost.cc 192.168.1.1 2>/dev/null | tail -2

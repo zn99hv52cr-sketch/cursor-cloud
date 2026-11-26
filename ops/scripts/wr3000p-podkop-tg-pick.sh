@@ -42,16 +42,15 @@ else
 	logger -t podkop-tg-pick "pinned ${PIN:-empty} not in selector"
 fi
 
-rm -f /tmp/wr-yt-best
-order | while read -r tag; do
+best=""
+best_ms=999999
+for tag in $(order); do
 	[ -n "$tag" ] || continue
 	ms=$(delay_ms "$tag")
 	[ -n "$ms" ] && [ "$ms" -lt "$MAX_MS" ] && [ "$ms" -lt "$best_ms" ] || continue
 	best=$tag
 	best_ms=$ms
-	printf '%s %s\n' "$best_ms" "$best" > /tmp/wr-yt-best
 done
-read -r best_ms best < /tmp/wr-yt-best 2>/dev/null || exit 1
 [ -n "$best" ] || exit 1
 pin_live "$best"
 logger -t podkop-tg-pick "fastest $best ${best_ms}ms"
