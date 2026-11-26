@@ -41,6 +41,7 @@ if [ -x /usr/bin/wr3000p-hdrezka-kotikey.sh ]; then
 	/usr/bin/wr3000p-hdrezka-kotikey.sh >>"$LOG" 2>&1
 	/usr/bin/wr3000p-hdrezka-video-vpn.sh >>"$LOG" 2>&1
 fi
+[ -x /usr/bin/wr3000p-cursor-wifi.sh ] && /usr/bin/wr3000p-cursor-wifi.sh >>"$LOG" 2>&1
 [ -x /usr/bin/wr-helper ] && /usr/bin/wr-helper tv-policy >>"$LOG" 2>&1
 
 for API in "$API_LOCAL" "$API_LAN"; do
